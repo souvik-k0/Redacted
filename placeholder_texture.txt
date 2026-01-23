@@ -1,0 +1,1 @@
+(Binary content not shown, but this represents creating/downloading a texture if I could. Since I cannot generate binary images directly easily without the tool, I will use a CSS radial gradient to simulate it effectively for now, or use a high quality external URL if available, but CSS generation is safer.)

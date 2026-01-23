@@ -1,0 +1,545 @@
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --bg-wood: #2c241b;
+  --folder-color: #f0e6d2;
+  --folder-shadow: #bfa881;
+  --paper-color: #fdfbf7;
+  --ink-color: #2b2b2b;
+  --stamp-red: #d32f2f;
+  --typewriter-font: "Special Elite", cursive;
+  --body-font: "Courier Prime", monospace;
+  --shadow-depth: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+  --paper-texture: url("https://www.transparenttextures.com/patterns/aged-paper.png");
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--body-font);
+  background-color: var(--bg-wood);
+  background-image: radial-gradient(#3e3428 15%, transparent 16%),
+    radial-gradient(#3e3428 15%, transparent 16%);
+  background-size: 60px 60px;
+  background-position: 0 0, 30px 30px;
+  color: var(--ink-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* The Main Folder Container */
+.app-shell {
+  width: 90%;
+  max-width: 1200px;
+  min-height: 85vh;
+  background-color: var(--folder-color);
+  background-image: var(--paper-texture);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.1),
+    0 20px 50px rgba(0, 0, 0, 0.5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  transform: rotate(-0.5deg);
+  /* Slight organic tilt */
+}
+
+/* Folder Tab Effect */
+.app-shell::before {
+  content: "CONFIDENTIAL";
+  position: absolute;
+  top: -35px;
+  left: 30px;
+  background-color: var(--folder-color);
+  padding: 10px 30px;
+  border-radius: 10px 10px 0 0;
+  font-family: var(--typewriter-font);
+  font-size: 1.2rem;
+  color: var(--stamp-red);
+  letter-spacing: 2px;
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+  transform: rotate(1deg);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-bottom: none;
+}
+
+/* Stamp Effect */
+.status-bar::after {
+  content: "TOP SECRET";
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-family: var(--typewriter-font);
+  font-size: 2rem;
+  color: rgba(211, 47, 47, 0.3);
+  border: 4px solid rgba(211, 47, 47, 0.3);
+  padding: 5px 15px;
+  transform: rotate(-15deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header Section */
+.app-header {
+  border-bottom: 2px dashed #ccc;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  position: relative;
+}
+
+.brand-title {
+  font-family: var(--typewriter-font);
+  font-size: 2.5rem;
+  display: block;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.brand-subtitle {
+  font-family: var(--body-font);
+  font-size: 0.9rem;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+/* Photo Frame */
+.photo-frame {
+  background: #fff;
+  padding: 10px 10px 25px 10px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+  transform: rotate(-2deg);
+  margin: 0 auto 20px auto;
+  width: 80%;
+  max-width: 400px;
+  position: relative;
+}
+
+.photo-frame::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 60px;
+  background: #aaa;
+  border-radius: 15px;
+  z-index: 10;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  /* Paperclip shape */
+  clip-path: polygon(
+    0% 0%, 100% 0%, 100% 100%, 80% 100%, 80% 20%, 20% 20%, 20% 80%, 60% 80%, 60% 40%, 40% 40%, 40% 60%, 80% 60%, 80% 100%, 0% 100%
+  );
+}
+
+.scene-image-placeholder {
+  background: #111;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-family: var(--typewriter-font);
+  position: relative;
+  overflow: hidden;
+}
+
+.stamp-missing {
+  border: 3px solid #d32f2f;
+  color: #d32f2f;
+  padding: 5px 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transform: rotate(15deg);
+  margin-top: 10px;
+  opacity: 0.8;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+#action-points {
+  font-weight: bold;
+  background: #fff;
+  padding: 5px 10px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  transform: rotate(1deg);
+}
+
+/* Buttons (Paper Tabs/Stamps) */
+button {
+  background: white;
+  border: 1px solid #aaa;
+  font-family: var(--typewriter-font);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.15);
+  background-color: #f9f9f9;
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
+}
+
+.primary-btn {
+  background-color: var(--ink-color);
+  color: white;
+  border: none;
+}
+
+.primary-btn:hover {
+  background-color: #444;
+  color: white;
+}
+
+/* Case Picker (Index Cards) */
+.case-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.case-card {
+  background: white;
+  width: 250px;
+  padding: 20px;
+  box-shadow: var(--shadow-depth);
+  transition: transform 0.2s;
+  cursor: pointer;
+  position: relative;
+  transform: rotate(var(--rotation, 0deg));
+}
+
+.case-card:nth-child(even) {
+  --rotation: 1deg;
+}
+
+.case-card:nth-child(odd) {
+  --rotation: -1deg;
+}
+
+.case-card:hover {
+  transform: scale(1.02) rotate(0deg);
+  z-index: 10;
+}
+
+.case-card h3 {
+  font-family: var(--typewriter-font);
+  margin-top: 0;
+  border-bottom: 2px solid var(--ink-color);
+  padding-bottom: 5px;
+}
+
+.stamp-unsolved {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: var(--stamp-red);
+  font-family: var(--typewriter-font);
+  border: 2px solid var(--stamp-red);
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  transform: rotate(-10deg);
+  font-weight: bold;
+}
+
+/* Game View Layout */
+.game-view {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  height: 100%;
+}
+
+.chat-panel {
+  background: white;
+  padding: 2px;
+  /* Inner border gap */
+  box-shadow: var(--shadow-depth);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.chat-header {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  background: #fdfbf7;
+}
+
+.chat-window {
+  flex-grow: 1;
+  padding: 20px;
+  background: repeating-linear-gradient(#fdfbf7,
+      #fdfbf7 29px,
+      #a8d8e6 30px);
+  /* Lined paper effect */
+  overflow-y: auto;
+  font-family: var(--body-font);
+  line-height: 30px;
+  /* Aligns with grid */
+}
+
+/* Chat Messages */
+.message {
+  max-width: 80%;
+  margin-bottom: 15px;
+  padding: 10px;
+  position: relative;
+}
+
+.message.user {
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  font-style: italic;
+}
+
+.message.suspect {
+  margin-right: auto;
+  font-family: var(--typewriter-font);
+}
+
+.message.suspect::before {
+  content: "►";
+  margin-right: 5px;
+}
+
+.message.system {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  border-top: 1px dashed #ccc;
+  border-bottom: 1px dashed #ccc;
+  padding: 5px 0;
+}
+
+/* Sidebar "Case File" */
+.case-file {
+  background: #f4ecd8;
+  padding: 15px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.case-section h3 {
+  font-family: var(--typewriter-font);
+  font-size: 1.1rem;
+  text-decoration: underline;
+  margin-top: 0;
+}
+
+/* Suspect Photographs (Polaroids) */
+.suspect-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.suspect-card {
+  background: white;
+  padding: 5px 5px 20px 5px;
+  /* Bottom is thicker for polaroid look */
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.suspect-card:hover {
+  transform: scale(1.05) rotate(2deg);
+}
+
+.suspect-card.active {
+  border: 2px solid var(--stamp-red);
+  transform: scale(1.05);
+}
+
+/* Evidence List (Paperclipped Notes) */
+.evidence-list li {
+  list-style: none;
+  background: #fff;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+  border-left: 3px solid #ccc;
+}
+
+.evidence-list li.new-evidence {
+  border-left: 3px solid var(--stamp-red);
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #555;
+  font-family: var(--body-font);
+  font-size: 1rem;
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 10px;
+  outline: none;
+}
+
+input:focus,
+textarea:focus {
+  border-bottom: 2px solid var(--ink-color);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Modal - Top Secret File */
+.modal-content {
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+  /* Dim effect */
+  max-width: 500px;
+  margin: 100px auto;
+  padding: 40px;
+  position: relative;
+  transform: rotate(1deg);
+}
+
+.modal-content::after {
+  content: "TOP SECRET";
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-family: var(--typewriter-font);
+  font-size: 3rem;
+  color: rgba(0, 0, 0, 0.05);
+  transform: rotate(-30deg);
+}
+
+/* Animations */
+.shake-effect {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
+
+/* --- MOBILE OPTIMIZATION --- */
+@media (max-width: 768px) {
+  /* Reduce folder size */
+  .app-shell {
+    width: 95%;
+    padding: 10px;
+    min-height: 90vh;
+  }
+  
+  /* Stack Header */
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .status-bar {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  /* Make Status Bar Stamp smaller */
+  .status-bar::after {
+    font-size: 1.2rem;
+    top: -5px;
+    right: 5px;
+    border-width: 2px;
+  }
+
+  /* Stack Game View */
+  .game-view {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  /* Chat Panel should have a fixed max height on mobile to allow scrolling to case file */
+  .chat-panel {
+    max-height: 50vh;
+    min-height: 400px;
+  }
+
+  /* Case File takes remaining space */
+  .case-file {
+    border-left: none;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Adjust Fonts */
+  .brand-title {
+    font-size: 1.8rem;
+  }
+  
+  .modal-content {
+    margin: 50px auto;
+    width: 90%;
+    padding: 20px;
+  }
+
+  /* Suspect List - Single Column or smaller grid */
+  .suspect-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Messages can be wider */
+  .message {
+    max-width: 90%;
+  }
+
+  /* Photo Frame Responsiveness */
+  .photo-frame {
+    width: 90%;
+  }
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REDACTED</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+
+  <!-- Settings Modal (Kept outside the folder) -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>DETECTIVE INTELLIGENCE</h2>
+      <p>To enable dynamic AI conversations, enter your Google Gemini API Key below. (Free at aistudio.google.com)</p>
+      <div class="input-group">
+        <label for="api-key">API Key:</label>
+        <input type="password" id="api-key" placeholder="AIzaSy..." />
+      </div>
+      <div class="modal-actions">
+        <button id="save-key" class="primary-btn">ACTIVATE AI</button>
+        <!-- Offline Mode Removed -->
+      </div>
+      <p class="status-msg" id="key-status">Current Status: Offline Mode (Scripted)</p>
+    </div>
+  </div>
+
+  <!-- Main Folder Container -->
+  <main class="app-shell">
+
+    <!-- Moved Header Inside Folder -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-title">REDACTED</span>
+        <span class="brand-subtitle">Top Secret Case Files</span>
+      </div>
+      <div class="status-bar">
+        <button id="settings-btn" class="icon-btn" title="AI Settings">⚙️ AI Setup</button>
+        <span id="case-title">Select a Case</span>
+        <span id="action-points">Actions: 0</span>
+      </div>
+    </header>
+
+    <section class="main-menu" id="main-menu">
+      <div class="menu-content">
+        <h1>REDACTED</h1>
+        <p class="menu-subtitle">Top Secret Case Files. Authorized Personnel Only.</p>
+        <button id="start-game-btn" class="primary-btn large-btn">ENTER ARCHIVES</button>
+      </div>
+    </section>
+
+    <section class="case-picker hidden" id="case-picker">
+      <h2>UNSOLVED CASE FILES</h2>
+      <div id="case-list" class="case-list"></div>
+    </section>
+
+    <section class="story-view hidden" id="story-view">
+      <div class="story-content">
+        <div class="photo-frame">
+          <div id="crime-scene-image" class="scene-image-placeholder">
+            <span>EVIDENCE PHOTO #<span id="photo-id">---</span></span>
+            <span class="stamp-missing">IMAGE MISSING</span>
+          </div>
+        </div>
+        <h2 id="story-title">Case Title</h2>
+        <div class="story-text" id="story-text"></div>
+        <button id="start-investigation" class="primary-btn">Begin Investigation</button>
+      </div>
+    </section>
+    <!-- Duplicate content removed -->
+
+    <section class="game-view hidden" id="game-view">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div>
+            <h2 id="suspect-name">Select a Suspect</h2>
+            <p id="suspect-persona">Pick someone to interrogate.</p>
+          </div>
+          <div class="chat-actions">
+            <button id="search-body">Search Body</button>
+            <button id="check-room">Check Room</button>
+            <button id="send-lab">Send to Lab</button>
+          </div>
+        </div>
+        <div id="chat-window" class="chat-window"></div>
+        <div class="chat-input">
+          <input id="user-input" type="text" placeholder="Ask a question..." />
+          <button id="send-message">Send</button>
+        </div>
+      </div>
+
+      <aside class="case-file">
+        <div class="case-section">
+          <h3>Case File</h3>
+          <p id="case-summary"></p>
+          <div class="case-meta" id="case-meta"></div>
+        </div>
+
+        <div class="case-section">
+          <h3>Suspects</h3>
+          <div id="suspect-list" class="suspect-list"></div>
+        </div>
+
+        <div class="case-section">
+          <h3>Evidence</h3>
+          <ul id="evidence-list" class="evidence-list"></ul>
+        </div>
+
+        <div class="case-section">
+          <h3>Accusation</h3>
+          <label for="accuse-suspect">Culprit</label>
+          <select id="accuse-suspect"></select>
+          <label for="accuse-motive">Motive</label>
+          <textarea id="accuse-motive" rows="3" placeholder="State the motive"></textarea>
+          <button id="submit-accusation">Submit Accusation</button>
+          <div id="accusation-result" class="accusation-result"></div>
+        </div>
+
+        <button id="back-to-cases" class="back-button">Back to Cases</button>
+      </aside>
+    </section>
+  </main>
+
+
+  <script src="./app.js"></script>
+</body>
+
+</html>
