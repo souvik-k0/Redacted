@@ -19,11 +19,28 @@
         <label for="api-key">API Key:</label>
         <input type="password" id="api-key" placeholder="AIzaSy..." />
       </div>
+      <!-- Language Selector moved to header -->
       <div class="modal-actions">
         <button id="save-key" class="primary-btn">ACTIVATE AI</button>
         <!-- Offline Mode Removed -->
       </div>
       <p class="status-msg" id="key-status">Current Status: Offline Mode (Scripted)</p>
+    </div>
+  </div>
+
+  <!-- Solution Modal (Case Closed) -->
+  <div id="solution-modal" class="modal hidden">
+    <div class="modal-content solution-content">
+      <h2 id="solution-status">CASE CLOSED</h2>
+      <div class="solution-details">
+        <div id="solution-killer-photo" class="solution-photo"></div>
+        <div class="solution-text">
+          <h3>The Killer: <span id="solution-killer"></span></h3>
+          <p><strong>Motive:</strong> <span id="solution-motive"></span></p>
+          <p><strong>The Truth:</strong> <span id="solution-narrative"></span></p>
+        </div>
+      </div>
+      <button id="close-solution" class="primary-btn">CLOSE CASE</button>
     </div>
   </div>
 
@@ -37,6 +54,10 @@
         <span class="brand-subtitle">Top Secret Case Files</span>
       </div>
       <div class="status-bar">
+        <select id="language-select" class="lang-dropdown">
+          <option value="en">English</option>
+          <option value="bn">বাংলা</option>
+        </select>
         <button id="settings-btn" class="icon-btn" title="AI Settings">⚙️ AI Setup</button>
         <span id="case-title">Select a Case</span>
         <span id="action-points">Actions: 0</span>
@@ -72,25 +93,47 @@
     <!-- Duplicate content removed -->
 
     <section class="game-view hidden" id="game-view">
-      <div class="chat-panel">
-        <div class="chat-header">
-          <div>
-            <h2 id="suspect-name">Select a Suspect</h2>
-            <p id="suspect-persona">Pick someone to interrogate.</p>
-          </div>
-          <div class="chat-actions">
-            <button id="search-body">Search Body</button>
-            <button id="check-room">Check Room</button>
-            <button id="send-lab">Send to Lab</button>
+      <!-- Left Panel: Investigation Notebook -->
+      <div class="investigation-panel">
+        <!-- Investigation Actions (Always Visible) -->
+        <div class="action-section">
+          <h3 id="action-header">Investigation Actions</h3>
+          <div class="investigation-actions">
+            <button id="search-body" class="action-btn">🔍 Search Body</button>
+            <button id="check-room" class="action-btn">🚪 Check Room</button>
+            <button id="send-lab" class="action-btn">🧪 Send to Lab</button>
           </div>
         </div>
-        <div id="chat-window" class="chat-window"></div>
-        <div class="chat-input">
-          <input id="user-input" type="text" placeholder="Ask a question..." />
-          <button id="send-message">Send</button>
+
+        <!-- Interrogation Section (Visible when suspect selected) -->
+        <div class="interrogation-section hidden" id="interrogation-section">
+          <div class="interrogation-header">
+            <h3 id="interrogation-title">Interrogating:</h3>
+            <div class="suspect-info">
+              <strong id="suspect-name">Select a Suspect</strong>
+              <span id="suspect-persona">Click a suspect from the sidebar</span>
+            </div>
+          </div>
+          <div class="chat-bubble" id="chat-bubble">
+            <!-- Current AI response shows here -->
+          </div>
+          <div class="chat-input">
+            <input id="user-input" type="text" placeholder="Ask a question..." />
+            <button id="send-message">Send</button>
+          </div>
+        </div>
+
+        <!-- Investigation Notes (Notebook lines filled with notes) -->
+        <div class="notes-section">
+          <h3 id="notes-header">Detective's Notes</h3>
+          <div class="notes-content" id="notes-content">
+            <!-- Notes will be dynamically added here -->
+            <div class="note-placeholder" id="note-placeholder">Begin your investigation...</div>
+          </div>
         </div>
       </div>
 
+      <!-- Right Sidebar: Case File -->
       <aside class="case-file">
         <div class="case-section">
           <h3>Case File</h3>
@@ -99,7 +142,8 @@
         </div>
 
         <div class="case-section">
-          <h3>Suspects</h3>
+          <h3 id="suspects-header">Suspects</h3>
+          <p class="suspects-hint" id="suspects-hint">Click to interrogate</p>
           <div id="suspect-list" class="suspect-list"></div>
         </div>
 

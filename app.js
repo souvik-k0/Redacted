@@ -4,11 +4,13 @@ const state = {
   selectedSuspectId: null,
   chatHistory: [],
   evidenceFound: [],
+  investigationNotes: [], // Detective's notebook entries
   labReady: false,
   labProcessing: false,
   responseIndex: {},
   apiKey: null,
-  activeCases: []
+  activeCases: [],
+  language: 'en'
 };
 
 // UI Elements
@@ -17,14 +19,183 @@ const actionPointsEl = document.getElementById("action-points");
 const settingsBtn = document.getElementById("settings-btn");
 const settingsModal = document.getElementById("settings-modal");
 const apiKeyInput = document.getElementById("api-key");
+const languageSelect = document.getElementById("language-select");
 const saveKeyBtn = document.getElementById("save-key");
 const keyStatus = document.getElementById("key-status");
 const casePicker = document.getElementById("case-picker");
+// ... (rest of UI elements remain same, just ensuring languageSelect is defined)
+
+// Translations
+const translations = {
+  en: {
+    brandSubtitle: "Top Secret Case Files",
+    menuSubtitle: "Top Secret Case Files. Authorized Personnel Only.",
+    enterArchives: "ENTER ARCHIVES",
+    unsolvedCases: "UNSOLVED CASE FILES",
+    aiSetup: "⚙️ AI Setup",
+    selectCase: "Select a Case",
+    actions: "Actions:",
+    beginInvestigation: "Begin Investigation",
+    selectSuspect: "Select a Suspect",
+    pickSuspect: "Pick someone to interrogate.",
+    searchBody: "Search Body",
+    checkRoom: "Check Room",
+    sendLab: "Send to Lab",
+    chatPlaceholder: "Ask a question...",
+    send: "Send",
+    caseFile: "Case File",
+    suspects: "Suspects",
+    evidence: "Evidence",
+    accusation: "Accusation",
+    culprit: "Culprit",
+    motive: "Motive",
+    motivePlaceholder: "State the motive",
+    submitAccusation: "Submit Accusation",
+    backToCases: "Back to Cases",
+    activateAI: "ACTIVATE AI",
+    closeCase: "CLOSE CASE",
+    caseClosed: "CASE CLOSED",
+    caseCold: "CASE COLD: FAILURE",
+    imageMissing: "IMAGE MISSING",
+    modalTitle: "DETECTIVE INTELLIGENCE",
+    modalDesc: "To enable dynamic AI conversations, enter your Google Gemini API Key below. (Free at aistudio.google.com)",
+    labelApiKey: "API Key:",
+    statusMissing: "Current Status: MISSING API KEY",
+    statusOnline: "Current Status: AI ENABLED (Online)",
+    investigationActions: "Investigation Actions",
+    interrogating: "Interrogating:",
+    detectivesNotes: "Detective's Notes",
+    suspectsHint: "Click to interrogate",
+    beginInvestigating: "Begin your investigation..."
+  },
+  bn: {
+    brandSubtitle: "টপ সিক্রেট কেস ফাইল",
+    menuSubtitle: "গোপনীয় কেস ফাইল। শুধুমাত্র অনুমোদিত ব্যক্তিদের জন্য।",
+    enterArchives: "আর্কাইভে প্রবেশ করুন",
+    unsolvedCases: "অমীমাংসিত রহস্য",
+    aiSetup: "⚙️ সেটিংস",
+    selectCase: "একটি কেস নির্বাচন করুন",
+    actions: "অ্যাকশন:",
+    beginInvestigation: "তদন্ত শুরু করুন",
+    selectSuspect: "সন্দেহভাজন নির্বাচন করুন",
+    pickSuspect: "জিজ্ঞাসাবাদের জন্য কাউকে বেছে নিন।",
+    searchBody: "শরীর তল্লাশি",
+    checkRoom: "ঘর তল্লাশি",
+    sendLab: "ল্যাবে পাঠান",
+    chatPlaceholder: "প্রশ্ন জিজ্ঞাসা করুন...",
+    send: "পাঠান",
+    caseFile: "কেস ফাইল",
+    suspects: "সন্দেহভাজনরা",
+    evidence: "প্রমাণ",
+    accusation: "অভিযোগ",
+    culprit: "অপরাধী",
+    motive: "উদ্দেশ্য",
+    motivePlaceholder: "উদ্দেশ্য বর্ণনা করুন",
+    submitAccusation: "অভিযোগ জমা দিন",
+    backToCases: "সব কেস",
+    activateAI: "সেভ করুন",
+    closeCase: "কেস বন্ধ করুন",
+    caseClosed: "কেস সমাধান হয়েছে",
+    caseCold: "কেস সমাধান হয়নি",
+    imageMissing: "ছবি নেই",
+    modalTitle: "গোয়েন্দা বুদ্ধিমত্তা (AI)",
+    modalDesc: "ডাইনামিক AI কথোপকথন চালু করতে, নিচে আপনার Google Gemini API Key দিন। (aistudio.google.com এ বিনামূল্যে)",
+    labelApiKey: "API কি (Key):",
+    statusMissing: "বর্তমান অবস্থা: API KEY নেই",
+    statusOnline: "বর্তমান অবস্থা: AI চালু আছে (অনলাইন)",
+    investigationActions: "তদন্ত কার্যকলাপ",
+    interrogating: "জিজ্ঞাসাবাদ:",
+    detectivesNotes: "গোয়েন্দার নোট",
+    suspectsHint: "জিজ্ঞাসাবাদ করতে ক্লিক করুন",
+    beginInvestigating: "তদন্ত শুরু করুন..."
+  }
+};
+
+const updateUILanguage = (lang) => {
+  // CRITICAL: Set state.language FIRST before anything else
+  state.language = lang;
+
+  // CRITICAL: Also sync the dropdown to match
+  if (languageSelect.value !== lang) {
+    languageSelect.value = lang;
+  }
+
+  console.log(`updateUILanguage called with: ${lang}, state.language now: ${state.language}, dropdown now: ${languageSelect.value}`);
+
+  const t = translations[lang];
+  // Main UI
+  document.querySelector(".brand-subtitle").textContent = t.brandSubtitle;
+  document.querySelector(".menu-subtitle").textContent = t.menuSubtitle;
+  document.getElementById("start-game-btn").textContent = t.enterArchives;
+  document.querySelector("#case-picker h2").textContent = t.unsolvedCases;
+  settingsBtn.innerHTML = t.aiSetup;
+  document.getElementById("case-title").textContent = t.selectCase;
+  document.getElementById("start-investigation").textContent = t.beginInvestigation;
+
+  // Modal Content
+  document.querySelector("#settings-modal h2").textContent = t.modalTitle;
+  document.querySelector("#settings-modal p").textContent = t.modalDesc;
+  document.querySelector("label[for='api-key']").textContent = t.labelApiKey;
+
+  // Game Actions
+  document.getElementById("suspect-name").textContent = t.selectSuspect;
+  document.getElementById("suspect-persona").textContent = t.pickSuspect;
+  searchBody.textContent = t.searchBody;
+  checkRoom.textContent = t.checkRoom;
+  sendLab.textContent = t.sendLab;
+  userInput.placeholder = t.chatPlaceholder;
+  sendMessage.textContent = t.send;
+
+  // Headers
+  document.querySelector("#game-view h3:nth-of-type(1)").textContent = t.caseFile;
+  document.querySelector("#game-view h3:nth-of-type(2)").textContent = t.suspects;
+  document.querySelector("#game-view h3:nth-of-type(3)").textContent = t.evidence;
+  document.querySelector("#game-view h3:nth-of-type(4)").textContent = t.accusation;
+
+  // Accusation Form
+  document.querySelector("label[for='accuse-suspect']").textContent = t.culprit;
+  document.querySelector("label[for='accuse-motive']").textContent = t.motive;
+  accuseMotive.placeholder = t.motivePlaceholder;
+  submitAccusation.textContent = t.submitAccusation;
+  backToCases.textContent = t.backToCases;
+  saveKeyBtn.textContent = t.activateAI;
+  document.getElementById("close-solution").textContent = t.closeCase;
+
+  // Update status message immediately if possible
+  updateKeyStatus();
+
+  // Update static elements if they exist
+  const stamps = document.querySelectorAll(".stamp-missing");
+  stamps.forEach(s => s.textContent = t.imageMissing);
+
+  // New Investigation UI elements
+  const actionHeader = document.getElementById("action-header");
+  if (actionHeader) actionHeader.textContent = t.investigationActions;
+
+  const interrogationTitle = document.getElementById("interrogation-title");
+  if (interrogationTitle) interrogationTitle.textContent = t.interrogating;
+
+  const notesHeader = document.getElementById("notes-header");
+  if (notesHeader) notesHeader.textContent = t.detectivesNotes;
+
+  const suspectsHint = document.getElementById("suspects-hint");
+  if (suspectsHint) suspectsHint.textContent = t.suspectsHint;
+
+  const notePlaceholder = document.getElementById("note-placeholder");
+  if (notePlaceholder) notePlaceholder.textContent = t.beginInvestigating;
+
+  // Update action buttons with emojis
+  if (searchBody) searchBody.textContent = `🔍 ${t.searchBody}`;
+  if (checkRoom) checkRoom.textContent = `🚪 ${t.checkRoom}`;
+  if (sendLab) sendLab.textContent = `🧪 ${t.sendLab}`;
+};
+
+
 const caseList = document.getElementById("case-list");
 const gameView = document.getElementById("game-view");
 const suspectName = document.getElementById("suspect-name");
 const suspectPersona = document.getElementById("suspect-persona");
-const chatWindow = document.getElementById("chat-window");
+// chatWindow removed - now using notes-based UI
 const userInput = document.getElementById("user-input");
 const sendMessage = document.getElementById("send-message");
 const searchBody = document.getElementById("search-body");
@@ -58,31 +229,25 @@ const updateActionPoints = () => {
   }
 };
 
+// Typing indicator for chat bubble
 const showTypingIndicator = () => {
-  const bubble = document.createElement("div");
-  bubble.className = "typing-indicator";
-  bubble.id = "typing-indicator";
-  bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-  chatWindow.appendChild(bubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  const chatBubble = document.getElementById("chat-bubble");
+  if (chatBubble) {
+    chatBubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  }
 };
 
-const removeTypingIndicator = () => {
-  const bubble = document.getElementById("typing-indicator");
-  if (bubble) bubble.remove();
-};
-
+// Legacy addMessage - redirects to notes system
 const addMessage = (author, text, isHtml = false) => {
   state.chatHistory.push({ author, text });
-  const bubble = document.createElement("div");
-  bubble.className = `message ${author}`;
-  if (isHtml) {
-    bubble.innerHTML = text;
-  } else {
-    bubble.textContent = text;
+  if (author === "system") {
+    addNote("system", text);
+  } else if (author === "suspect") {
+    const suspect = state.currentCase?.suspects?.find(s => s.id === state.selectedSuspectId);
+    addNote("interrogation", text, suspect?.name || "Suspect");
+  } else if (author === "user") {
+    addNote("interrogation", `Q: "${text}"`, "Detective");
   }
-  chatWindow.appendChild(bubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
 };
 
 const renderEvidence = (newItems = []) => {
@@ -97,12 +262,65 @@ const renderEvidence = (newItems = []) => {
   });
 };
 
+// Investigation Notes System
+const addNote = (type, text, speaker = null) => {
+  const note = {
+    type: type, // 'evidence', 'interrogation', 'system'
+    text: text,
+    speaker: speaker,
+    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  };
+  state.investigationNotes.push(note);
+  renderNotes();
+};
+
+const renderNotes = () => {
+  const notesContent = document.getElementById("notes-content");
+  const placeholder = document.getElementById("note-placeholder");
+
+  if (state.investigationNotes.length === 0) {
+    if (placeholder) placeholder.style.display = "block";
+    return;
+  }
+
+  if (placeholder) placeholder.style.display = "none";
+
+  // Clear and re-render (keep placeholder hidden)
+  notesContent.innerHTML = "";
+
+  state.investigationNotes.forEach(note => {
+    const entry = document.createElement("div");
+    entry.className = `note-entry ${note.type}`;
+
+    let noteText = note.text;
+    if (note.speaker) {
+      noteText = `<strong>${note.speaker}:</strong> ${note.text}`;
+    }
+
+    entry.innerHTML = `
+      <span class="note-time">${note.time}</span>
+      <span class="note-text">${noteText}</span>
+    `;
+    notesContent.appendChild(entry);
+  });
+
+  // Scroll to bottom
+  notesContent.scrollTop = notesContent.scrollHeight;
+};
+
 const setSystemIntro = (caseData) => {
-  chatWindow.innerHTML = "";
-  addMessage(
-    "system",
-    `Case opened: ${caseData.title}. You have ${state.actionPoints} actions to solve it.`
-  );
+  // Reset investigation notes for new case
+  state.investigationNotes = [];
+  renderNotes();
+
+  // Add intro note
+  addNote("system", `Case opened: ${caseData.title}. You have ${state.actionPoints} actions to solve it.`);
+
+  // Hide interrogation section (will show when suspect selected)
+  const interrogationSection = document.getElementById("interrogation-section");
+  if (interrogationSection) {
+    interrogationSection.classList.add("hidden");
+  }
 };
 
 const callGeminiAI = async (suspect, userText) => {
@@ -124,10 +342,19 @@ const callGeminiAI = async (suspect, userText) => {
     What you know about evidence: ${suspect.evidence}
   `;
 
+  let langInstruction = "";
+  if (state.language === "bn") {
+    langInstruction = `
+      IMPORTANT: Respond entirely in BENGALI (Bangla) language.
+      Context: The setting is Kolkata, West Bengal. Use appropriate cultural nuances.
+    `;
+  }
+
   const prompt = `
     ${caseContext}
     ${suspectContext}
     The user (Detective) asks: "${userText}"
+    ${langInstruction}
     Instructions:
     1. Reply in character as ${suspect.name}.
     2. Be defensive if you are the killer or have a secret.
@@ -156,52 +383,133 @@ const callGeminiAI = async (suspect, userText) => {
 };
 
 const generateAICases = async () => {
+  // CRITICAL: Read language directly from dropdown FIRST
+  const effectiveLang = languageSelect.value;
+  state.language = effectiveLang; // Force sync
+
+  console.log("=== GENERATE AI CASES DEBUG ===");
+  console.log("Dropdown value:", languageSelect.value);
+  console.log("State.language:", state.language);
+  console.log("Effective language for this call:", effectiveLang);
+  console.log("================================");
+
   if (!state.apiKey) {
-    alert("Please enter your Gemini API Key in Settings to generate cases.");
+    console.log("No API key - opening settings modal");
     settingsModal.classList.remove("hidden");
     return;
   }
 
-  caseList.innerHTML = '<div class="loading-msg">Generating 5 Unique Cases via Gemini AI...<br>This may take a few seconds.</div>';
+  const loadingMsg = effectiveLang === 'bn'
+    ? 'জেমিনি AI এর মাধ্যমে ৫টি অনন্য কেস তৈরি হচ্ছে...<br>কয়েক সেকেন্ড সময় লাগতে পারে।'
+    : 'Generating 5 Unique Cases via Gemini AI...<br>This may take a few seconds.';
+  caseList.innerHTML = `<div class="loading-msg">${loadingMsg}</div>`;
 
-  const prompt = `
-    Generate 5 unique detective mystery cases.
-    Each case must be a valid JSON object following this exact schema:
-    [
+  let prompt = "";
+
+  if (effectiveLang === "bn") {
+    // BENGALI PROMPT - Very explicit, MUST generate in Bengali
+    prompt = `
+!!! CRITICAL INSTRUCTION - READ FIRST !!!
+YOU MUST RESPOND ENTIRELY IN BENGALI (বাংলা) LANGUAGE.
+DO NOT USE ANY ENGLISH TEXT IN THE VALUES.
+ONLY THE JSON KEYS SHOULD BE IN ENGLISH.
+ALL VALUES MUST BE IN BENGALI SCRIPT (বাংলা লিপি).
+
+তুমি একজন বাংলা গোয়েন্দা গল্প লেখক। তোমাকে ৫টি ডিটেকটিভ মিস্ট্রি কেস বাংলায় লিখতে হবে।
+
+বাধ্যতামূলক নিয়ম:
+১. সব টেক্সট বাংলায় লিখতে হবে। কোনো ইংরেজি শব্দ চলবে না।
+২. স্থান: কলকাতা, পশ্চিমবঙ্গ (যেমন - শ্যামবাজার, কলেজ স্ট্রিট, গড়িয়াহাট, বালিগঞ্জ, উত্তর কলকাতা)
+৩. চরিত্রের নাম: বাংলা নাম (যেমন - সুব্রত চ্যাটার্জি, মিতালী ব্যানার্জি, রাজেশ ঘোষ, প্রিয়ংকা রায়)
+৪. থিম: বাংলা কালচারাল (যেমন - পুজোর মৌসুম, কলেজ স্ট্রিটের বইয়ের দোকান, পুরনো জমিদার বাড়ি)
+৫. narrative ফিল্ডে কমপক্ষে ১০০ শব্দ লিখতে হবে - বিস্তারিত গল্প বলো!
+
+JSON ফরম্যাট (keys ইংরেজি, values বাংলা):
+[
+  {
+    "id": "kolkata_case_1",
+    "title": "হাওড়া ব্রিজের রহস্য",
+    "theme": "নোয়ার কলকাতা",
+    "narrative": "একটি ঝড়ের রাতে হাওড়া ব্রিজের নিচে একটি লাশ পাওয়া যায়। লাশটি ছিল বিখ্যাত ব্যবসায়ী অমিত সেনের। তার মাথায় গভীর আঘাত ছিল। পুলিশ ঘটনাস্থলে পৌঁছে দেখল যে তার পকেটে একটি রহস্যময় চিঠি ছিল। চিঠিতে লেখা ছিল কিছু সংকেত যা বোঝা যাচ্ছিল না। ব্রিজের নিচে তার গাড়িও পাওয়া গেল, কিন্তু গাড়ির চাবি নেই। প্রত্যক্ষদর্শীরা জানাল যে রাত দুটোর দিকে একটি গাড়ি দ্রুত গতিতে ব্রিজ থেকে নেমে গিয়েছিল। এই রহস্যময় খুনের তদন্ত শুরু হল...",
+    "summary": "হাওড়া ব্রিজে রহস্যজনক মৃত্যু",
+    "victim": "অমিত সেন",
+    "cause": "মাথায় আঘাত",
+    "location": "হাওড়া ব্রিজ, কলকাতা",
+    "time": "রাত ২টা",
+    "suspects": [
       {
-        "id": "unique_string",
-        "title": "String",
-        "theme": "String (e.g. Noir, Cyberpunk, Victorian)",
-        "narrative": "String (Long description)",
-        "summary": "String (Short description)",
-        "victim": "Name",
-        "cause": "Cause of death",
-        "location": "Location",
-        "time": "Time",
-        "suspects": [
-          {
-            "id": "unique_id",
-            "name": "Name",
-            "persona": "Description",
-            "alibi": "Alibi explanation",
-            "motive": "Motive explanation",
-            "evidence": "Evidence linking them",
-            "secret": "A secret they are hiding"
-          }
-        ],
-        "evidence": {
-          "initial": ["Item 1", "Item 2"],
-          "bodySearch": ["Item 3", "Item 4"],
-          "roomSearch": ["Item 5", "Item 6"],
-          "labClue": "Clue from lab analysis",
-          "smokingGun": "The piece of evidence that proves the killer"
-        },
-        "killerId": "id of one suspect",
-        "motiveText": "Full explanation of why they did it",
-        "motiveKeywords": ["keyword1", "keyword2", "keyword3"]
+        "id": "suspect_1",
+        "name": "রাজীব চ্যাটার্জি",
+        "persona": "ব্যবসায়ী, ৪৫ বছর",
+        "alibi": "আমি বাড়িতে ছিলাম",
+        "motive": "ব্যবসায়িক প্রতিদ্বন্দ্বিতা",
+        "evidence": "তার গাড়ি ব্রিজের কাছে দেখা গেছে",
+        "secret": "সে টাকা ধার করেছিল"
       }
-    ]
-  `;
+    ],
+    "evidence": {
+      "initial": ["রক্তমাখা রুমাল", "ভাঙা চশমা"],
+      "bodySearch": ["মানিব্যাগ", "একটি চিঠি"],
+      "roomSearch": ["ছোরা", "পোড়া কাগজ"],
+      "labClue": "আঙুলের ছাপ মিলেছে",
+      "smokingGun": "হত্যাকারীর ফোনের রেকর্ড"
+    },
+    "killerId": "suspect_1",
+    "motiveText": "টাকার জন্য খুন",
+    "solution": "রাজীব টাকা ফেরত দিতে না পেরে অমিতকে খুন করে",
+    "motiveKeywords": ["টাকা", "ঋণ", "প্রতিশোধ"]
+  }
+]
+
+এখন ৫টি সম্পূর্ণ আলাদা কেস তৈরি করো। প্রতিটিতে ৩-৪ জন সন্দেহভাজন রাখো।
+মনে রেখো: সব কিছু বাংলায়! narrative কমপক্ষে ১০০ শব্দ!
+`;
+  } else {
+    // English prompt
+    prompt = `
+Generate 5 unique detective mystery cases.
+IMPORTANT: The "narrative" field MUST be at least 100 words - tell a detailed, engaging story!
+
+Each case must be a valid JSON object following this exact schema:
+[
+  {
+    "id": "unique_string",
+    "title": "String",
+    "theme": "String (e.g. Noir, Cyberpunk, Victorian)",
+    "narrative": "String (MUST be at least 100 words - detailed story setup)",
+    "summary": "String (Short 1-2 sentence description)",
+    "victim": "Name",
+    "cause": "Cause of death",
+    "location": "Location",
+    "time": "Time",
+    "suspects": [
+      {
+        "id": "unique_id",
+        "name": "Name",
+        "persona": "Description",
+        "alibi": "Alibi explanation",
+        "motive": "Motive explanation",
+        "evidence": "Evidence linking them",
+        "secret": "A secret they are hiding"
+      }
+    ],
+    "evidence": {
+      "initial": ["Item 1", "Item 2"],
+      "bodySearch": ["Item 3", "Item 4"],
+      "roomSearch": ["Item 5", "Item 6"],
+      "labClue": "Clue from lab analysis",
+      "smokingGun": "The piece of evidence that proves the killer"
+    },
+    "killerId": "id of one suspect",
+    "motiveText": "Full explanation of why they did it",
+    "solution": "Detailed narrative of HOW the crime was committed and how the evidence proves it",
+    "motiveKeywords": ["keyword1", "keyword2", "keyword3"]
+  }
+]
+
+Remember: narrative must be 100+ words with rich detail!
+    `;
+  }
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`, {
@@ -224,19 +532,23 @@ const generateAICases = async () => {
 
     if (data.error) {
       console.error("Gemini Generation Error:", data.error);
-      alert(`AI Error: ${data.error.message || "Unknown Error"}`);
-      caseList.innerHTML = '<div class="error-msg">AI Generation Failed. Check settings.</div>';
+      caseList.innerHTML = `<div class="error-msg">AI Error: ${data.error.message || "Generation Failed"}</div>`;
       return;
     }
 
     if (!data.candidates || !data.candidates[0].content) {
       console.error("No candidates returned. Safety Block?", data);
-      alert("AI Generation Blocked by Safety Filters. Try again.");
-      caseList.innerHTML = '<div class="error-msg">Generation Blocked by Safety Levels.</div>';
+      caseList.innerHTML = '<div class="error-msg">Generation Blocked by Safety Filters.</div>';
       return;
     }
 
     let text = data.candidates[0].content.parts[0].text;
+
+    // DEBUG: Log raw response to verify Bengali content
+    console.log("=== RAW AI RESPONSE ===");
+    console.log(text.substring(0, 500)); // First 500 chars
+    console.log("========================");
+
     const newCases = JSON.parse(text);
 
     if (!Array.isArray(newCases)) {
@@ -251,12 +563,11 @@ const generateAICases = async () => {
 
     state.activeCases = newCases;
     renderCaseCards();
-    alert("5 New AI Cases Generated Successfully!");
+    console.log(effectiveLang === 'bn' ? '৫টি নতুন AI কেস সফলভাবে তৈরি হয়েছে!' : '5 New AI Cases Generated Successfully!');
 
   } catch (error) {
     console.error("AI Generation Failed:", error);
-    alert("Error generating cases. Monitor console for details.");
-    caseList.innerHTML = '<div class="error-msg">Network or API Error.</div>';
+    caseList.innerHTML = '<div class="error-msg">Network or API Error. Check console.</div>';
   }
 };
 
@@ -293,12 +604,30 @@ const getSuspectResponse = async (suspect, text) => {
 const selectSuspect = (suspectId) => {
   state.selectedSuspectId = suspectId;
   const suspect = state.currentCase.suspects.find((item) => item.id === suspectId);
+
+  // Update suspect display
   suspectName.textContent = suspect.name;
   suspectPersona.textContent = suspect.persona;
+
+  // Show interrogation section
+  const interrogationSection = document.getElementById("interrogation-section");
+  if (interrogationSection) {
+    interrogationSection.classList.remove("hidden");
+  }
+
+  // Clear chat bubble for new interrogation
+  const chatBubble = document.getElementById("chat-bubble");
+  if (chatBubble) {
+    chatBubble.innerHTML = "";
+  }
+
+  // Highlight active suspect card
   document.querySelectorAll(".suspect-card").forEach((card) => {
     card.classList.toggle("active", card.dataset.id === suspectId);
   });
-  addMessage("system", `Interrogation started with ${suspect.name}.`);
+
+  // Add note about starting interrogation
+  addNote("system", `Interrogation started with ${suspect.name}.`);
   updateActionPoints();
 };
 
@@ -400,39 +729,60 @@ const handleUserMessage = async () => {
   if (!text) return;
   userInput.value = "";
   state.actionPoints -= 1;
-  updateActionPoints(); // Update UI immediately
-
-  addMessage("user", text);
-  showTypingIndicator();
+  updateActionPoints();
 
   const suspect = state.currentCase.suspects.find(
     (item) => item.id === state.selectedSuspectId
   );
 
+  // Show typing indicator in chat bubble
+  const chatBubble = document.getElementById("chat-bubble");
+  if (chatBubble) {
+    chatBubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  }
+
   const response = await getSuspectResponse(suspect, text);
-  removeTypingIndicator();
-  addMessage("suspect", response);
+
+  // Display response in chat bubble
+  if (chatBubble) {
+    chatBubble.innerHTML = response;
+  }
+
+  // Add to investigation notes
+  addNote("interrogation", `Q: "${text}"`, "Detective");
+  addNote("interrogation", response, suspect.name);
 };
 
 const handleSearch = (type) => {
   if (state.actionPoints <= 0) return;
   const caseEvidence = state.currentCase.evidence;
   let newItems = [];
+  let searchType = "";
+
   if (type === "body") {
     newItems = caseEvidence.bodySearch;
+    searchType = state.language === 'bn' ? "শরীর তল্লাশি" : "Body Search";
   }
   if (type === "room") {
     newItems = caseEvidence.roomSearch;
+    searchType = state.language === 'bn' ? "ঘর তল্লাশি" : "Room Search";
   }
+
   const added = newItems.filter((item) => !state.evidenceFound.includes(item));
   if (added.length === 0) {
-    addMessage("system", "No new evidence found.");
+    addNote("evidence", state.language === 'bn' ? "কোনো নতুন প্রমাণ পাওয়া যায়নি।" : "No new evidence found.");
     return;
   }
+
   state.actionPoints -= 1;
   state.evidenceFound = [...state.evidenceFound, ...added];
   renderEvidence(added);
-  addMessage("system", `${added.length} new evidence item(s) logged.`);
+
+  // Add each evidence item as a note
+  added.forEach(item => {
+    addNote("evidence", `[${searchType}] ${item}`);
+  });
+
   updateActionPoints();
 };
 
@@ -482,17 +832,39 @@ const handleAccusation = () => {
   const requiredHits = Math.ceil(caseData.motiveKeywords.length / 2);
   const isCorrectMotive = keywordHits >= requiredHits;
 
+  /* Updated Accusation Logic for Solution Modal */
+  const solutionModal = document.getElementById("solution-modal");
+  const solutionStatus = document.getElementById("solution-status");
+  const solutionKiller = document.getElementById("solution-killer");
+  const solutionMotive = document.getElementById("solution-motive");
+  const solutionNarrative = document.getElementById("solution-narrative");
+  const solutionPhoto = document.getElementById("solution-killer-photo");
+  const closeSolutionBtn = document.getElementById("close-solution");
+
+  closeSolutionBtn.addEventListener("click", () => {
+    solutionModal.classList.add("hidden");
+    gameView.classList.add("hidden");
+    casePicker.classList.remove("hidden");
+    state.currentCase = null;
+    state.activeCases = state.activeCases.filter(c => c.id !== caseData.id); // Remove solved case
+    renderCaseCards();
+  });
+
+  const killer = caseData.suspects.find((item) => item.id === caseData.killerId);
+  solutionKiller.textContent = killer.name;
+  solutionMotive.textContent = caseData.motiveText;
+  solutionNarrative.textContent = caseData.solution || "The detective pieced together the clues...";
+  solutionPhoto.innerHTML = "📸"; // Placeholder for killer photo
+
   if (isCorrectSuspect && isCorrectMotive) {
-    accusationResult.style.color = "var(--success)";
-    accusationResult.textContent = `CORRECT! Case Closed. ${caseData.evidence.smokingGun}`;
-    // Victory animation could go here
+    solutionStatus.textContent = "CASE CLOSED: SUCCESS";
+    solutionStatus.style.color = "var(--success)";
   } else {
-    const killer = caseData.suspects.find((item) => item.id === caseData.killerId);
-    accusationResult.style.color = "#ff4444";
-    accusationResult.textContent = `INCORRECT. The killer escaped.`;
-    gameView.classList.add("shake-effect");
-    setTimeout(() => gameView.classList.remove("shake-effect"), 500);
+    solutionStatus.textContent = "CASE COLD: FAILURE";
+    solutionStatus.style.color = "#d32f2f";
   }
+
+  solutionModal.classList.remove("hidden");
 };
 
 const renderCaseCards = () => {
@@ -519,22 +891,38 @@ const renderCaseCards = () => {
 settingsBtn.addEventListener("click", () => {
   settingsModal.classList.remove("hidden");
   apiKeyInput.value = state.apiKey || "";
+  languageSelect.value = state.language;
   updateKeyStatus();
 });
 
 
 
 
+// Header Language Selector Listener
+languageSelect.addEventListener("change", (e) => {
+  const selectedLang = e.target.value;
+  if (selectedLang !== state.language) {
+    updateUILanguage(selectedLang);
+    // If API key is present, auto-regenerate cases in new language
+    if (state.apiKey) {
+      console.log(`Language changed to ${selectedLang === 'bn' ? 'Bengali' : 'English'}. Regenerating cases...`);
+      generateAICases();
+    }
+  }
+});
+
+// Update Settings Listener (Language handling moved to header listener)
 saveKeyBtn.addEventListener("click", () => {
   const key = apiKeyInput.value.trim();
+
   if (key) {
     state.apiKey = key;
-    alert("API Key Saved! Generating 5 New AI Cases...");
+    console.log("Settings Saved! Generating cases...");
     settingsModal.classList.add("hidden");
     generateAICases();
   } else {
     state.apiKey = null;
-    alert("API Key Removed.");
+    console.log("API Key Removed.");
     state.activeCases = [];
     renderCaseCards();
   }
@@ -543,11 +931,12 @@ saveKeyBtn.addEventListener("click", () => {
 });
 
 const updateKeyStatus = () => {
+  const t = translations[state.language];
   if (state.apiKey) {
-    keyStatus.textContent = "Current Status: AI ENABLED (Online)";
+    keyStatus.textContent = t.statusOnline;
     keyStatus.style.color = "var(--success)";
   } else {
-    keyStatus.textContent = "Current Status: MISSING API KEY";
+    keyStatus.textContent = t.statusMissing;
     keyStatus.style.color = "#d32f2f";
   }
 };
@@ -574,3 +963,13 @@ backToCases.addEventListener("click", () => {
 
 renderCaseCards();
 updateActionPoints();
+
+// CRITICAL: Initialize language state from dropdown on page load
+// This ensures state.language matches whatever the browser has in the dropdown
+(function initLanguage() {
+  const initialLang = languageSelect.value;
+  console.log(`Page load: initializing language from dropdown = ${initialLang}`);
+  state.language = initialLang;
+  // Update UI to match (in case browser restored a different selection)
+  updateUILanguage(initialLang);
+})();
