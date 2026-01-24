@@ -554,5 +554,23 @@ const updateKeyStatus = () => {
 
 updateKeyStatus();
 
+// Event Listeners for Game Interaction
+sendMessage.addEventListener("click", handleUserMessage);
+userInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") handleUserMessage();
+});
+
+searchBody.addEventListener("click", () => handleSearch("body"));
+checkRoom.addEventListener("click", () => handleSearch("room"));
+sendLab.addEventListener("click", handleLab);
+submitAccusation.addEventListener("click", handleAccusation);
+
+backToCases.addEventListener("click", () => {
+  gameView.classList.add("hidden");
+  casePicker.classList.remove("hidden");
+  state.currentCase = null;
+  renderCaseCards(); // Re-render to show "Open Case" buttons again
+});
+
 renderCaseCards();
 updateActionPoints();
