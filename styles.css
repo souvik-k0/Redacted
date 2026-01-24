@@ -700,6 +700,44 @@ textarea:focus {
 /* ===== MOBILE OPTIMIZATION ===== */
 @media (max-width: 768px) {
 
+  /* App shell - remove rotation on mobile */
+  .app-shell {
+    width: 95%;
+    padding: 15px;
+    transform: none;
+    min-height: auto;
+  }
+
+  .app-shell::before {
+    font-size: 0.9rem;
+    padding: 6px 15px;
+    top: -28px;
+  }
+
+  /* Stack header vertically */
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Status bar - full width and wrap */
+  .status-bar {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .status-bar::after {
+    display: none;
+    /* Hide TOP SECRET stamp on mobile */
+  }
+
+  #language-select {
+    min-width: 80px;
+  }
+
   /* Stack game view vertically on mobile - case file first */
   .game-view {
     display: flex;
@@ -790,21 +828,43 @@ textarea:focus {
     font-size: 1.6rem;
   }
 
-  .status-bar::after {
-    display: none;
-    /* Hide TOP SECRET stamp on mobile */
-  }
-
   /* Photo frame smaller on mobile */
   .photo-frame {
     width: 95%;
   }
 
-  /* Modal adjustments */
+  /* Modal - full width on mobile with proper positioning */
   .modal-content {
-    margin: 30px auto;
+    margin: 20px auto;
     width: 95%;
-    padding: 15px;
+    max-width: none;
+    padding: 20px;
+    transform: none;
+  }
+
+  .modal-content::after {
+    font-size: 1.5rem;
+    /* Smaller watermark on mobile */
+  }
+
+  /* Settings modal specific */
+  #settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  #settings-modal .modal-content {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    max-height: 90vh;
+    overflow-y: auto;
   }
 }
 
