@@ -324,48 +324,96 @@ const setSystemIntro = (caseData) => {
 };
 
 const callGeminiAI = async (suspect, userText) => {
+  // Determine if this suspect is the killer
+  const isKiller = suspect.id === state.currentCase.killerId;
+
+  // Get evidence the detective has found
+  const evidenceFound = state.evidenceFound.join(", ") || "None yet";
+
+  // Get recent conversation history for context
+  const recentHistory = state.investigationNotes
+    .filter(note => note.speaker === suspect.name || (note.speaker === "Detective" && note.type === "interrogation"))
+    .slice(-6)
+    .map(note => `${note.speaker}: ${note.text}`)
+    .join("\n");
+
   const caseContext = `
+    CASE DETAILS:
     Case: ${state.currentCase.title}
     Victim: ${state.currentCase.victim}
     Cause of Death: ${state.currentCase.cause}
     Location: ${state.currentCase.location}
     Time: ${state.currentCase.time}
+    Summary: ${state.currentCase.summary}
   `;
 
   const suspectContext = `
-    You are ${suspect.name}.
-    Persona: ${suspect.persona}
-    Your Secret: ${suspect.secret || "None"}
-    Your Alibi: ${suspect.alibi}
-    Your Motive: ${suspect.motive}
-    Your Relationship to Victim: ${suspect.relationship}
-    What you know about evidence: ${suspect.evidence}
+    CHARACTER PROFILE:
+    Name: ${suspect.name}
+    Role/Persona: ${suspect.persona}
+    Secret (hidden): ${suspect.secret || "None"}
+    Claimed Alibi: ${suspect.alibi}
+    True Motive: ${suspect.motive}
+    Relationship to Victim: ${suspect.relationship}
+    Evidence knowledge: ${suspect.evidence}
+    
+    IS KILLER: ${isKiller ? "YES - You committed this crime" : "NO - You are innocent"}
+  `;
+
+  const gameContext = `
+    INVESTIGATION STATE:
+    Evidence found by detective: ${evidenceFound}
+    
+    RECENT CONVERSATION:
+    ${recentHistory || "First question to this suspect."}
   `;
 
   let langInstruction = "";
   if (state.language === "bn") {
     langInstruction = `
-      IMPORTANT: Respond entirely in BENGALI (Bangla) language.
-      Context: The setting is Kolkata, West Bengal. Use appropriate cultural nuances.
+      CRITICAL: Respond entirely in BENGALI (বাংলা).
+      Setting is Kolkata. Use Bengali expressions and cultural nuances.
     `;
   }
+
+  const behaviorRules = isKiller ? `
+    GUILTY SUSPECT BEHAVIOR:
+    - Never admit guilt unless confronted with absolute proof
+    - Be evasive, deflect, or cast suspicion on others
+    - Add subtle inconsistencies if asked repeated questions
+    - Show nervousness when evidence implicating you is mentioned
+    - Get defensive or angry if directly accused without proof
+    - Your goal: survive until detective runs out of actions
+  ` : `
+    INNOCENT SUSPECT BEHAVIOR:
+    - Be genuinely helpful but appropriately guarded
+    - If you have a secret (affair, debt), be nervous about THAT, not the murder
+    - Your alibi is TRUE - be confident about it
+    - Offer useful info about other suspects if asked
+    - Show grief, fear, or frustration at being suspected
+    - Be annoyed if accused without evidence
+  `;
 
   const prompt = `
     ${caseContext}
     ${suspectContext}
-    The user (Detective) asks: "${userText}"
+    ${gameContext}
+    
+    Detective asks: "${userText}"
+    
     ${langInstruction}
-    Instructions:
-    1. Reply in character as ${suspect.name}.
-    2. Be defensive if you are the killer or have a secret.
-    3. Keep it under 50 words.
-    4. Do not reveal your secret unless pressed hard or presented proof.
-    5. If innocent, be helpful but maybe annoyed.
-    6. Never break character.
+    ${behaviorRules}
+    
+    RULES:
+    1. Stay in character as ${suspect.name}
+    2. Under 60 words, concise but dramatic
+    3. React to any evidence mentioned
+    4. If caught in contradiction, deflect or show stress
+    5. Never break character or mention this is a game
   `;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -373,7 +421,7 @@ const callGeminiAI = async (suspect, userText) => {
     const data = await response.json();
     if (data.error) {
       console.error("Gemini API Error:", data.error);
-      return getScriptedResponse(suspect, userText) + " (AI Error: Reverted to script)";
+      return getScriptedResponse(suspect, userText) + " (AI Error)";
     }
     return data.candidates[0].content.parts[0].text;
   } catch (error) {
@@ -465,49 +513,56 @@ JSON ফরম্যাট (keys ইংরেজি, values বাংলা):
 মনে রেখো: সব কিছু বাংলায়! narrative কমপক্ষে ১০০ শব্দ!
 `;
   } else {
-    // English prompt
+    // English prompt - Enhanced for smarter gameplay
     prompt = `
-Generate 5 unique detective mystery cases.
-IMPORTANT: The "narrative" field MUST be at least 100 words - tell a detailed, engaging story!
+Generate 5 unique detective mystery cases with SMART, INTERCONNECTED clues.
+CRITICAL: Make suspects memorable with distinct personalities. The killer should be hard to identify!
 
-Each case must be a valid JSON object following this exact schema:
+Each case must follow this schema:
 [
   {
     "id": "unique_string",
-    "title": "String",
-    "theme": "String (e.g. Noir, Cyberpunk, Victorian)",
-    "narrative": "String (MUST be at least 100 words - detailed story setup)",
-    "summary": "String (Short 1-2 sentence description)",
-    "victim": "Name",
-    "cause": "Cause of death",
-    "location": "Location",
-    "time": "Time",
+    "title": "Catchy mystery title",
+    "theme": "String (e.g. Noir, Cyberpunk, Victorian, Corporate)",
+    "narrative": "MUST be 100+ words. Set the scene dramatically. Include red herrings!",
+    "summary": "1-2 sentence hook",
+    "victim": "Full name",
+    "cause": "Specific cause of death",
+    "location": "Detailed location",
+    "time": "Specific time",
     "suspects": [
       {
-        "id": "unique_id",
-        "name": "Name",
-        "persona": "Description",
-        "alibi": "Alibi explanation",
-        "motive": "Motive explanation",
-        "evidence": "Evidence linking them",
-        "secret": "A secret they are hiding"
+        "id": "suspect_1",
+        "name": "Full name",
+        "persona": "Job, age, 2-3 personality traits",
+        "alibi": "Specific, verifiable alibi with time and witness if any",
+        "motive": "Clear reason they MIGHT have done it",
+        "relationship": "Their relationship to the victim",
+        "evidence": "What evidence might implicate them",
+        "secret": "A non-murder secret they're hiding (affair, debt, etc.)",
+        "personality": "How they behave when questioned (nervous, arrogant, helpful, defensive)"
       }
     ],
     "evidence": {
-      "initial": ["Item 1", "Item 2"],
-      "bodySearch": ["Item 3", "Item 4"],
-      "roomSearch": ["Item 5", "Item 6"],
-      "labClue": "Clue from lab analysis",
-      "smokingGun": "The piece of evidence that proves the killer"
+      "initial": ["2 obvious clues at scene"],
+      "bodySearch": ["2 clues from examining victim"],
+      "roomSearch": ["2 clues from searching area"],
+      "labClue": "Technical analysis result",
+      "smokingGun": "The ONE piece of evidence that proves the killer"
     },
-    "killerId": "id of one suspect",
-    "motiveText": "Full explanation of why they did it",
-    "solution": "Detailed narrative of HOW the crime was committed and how the evidence proves it",
-    "motiveKeywords": ["keyword1", "keyword2", "keyword3"]
+    "killerId": "id of the actual killer",
+    "motiveText": "The TRUE motive explained",
+    "solution": "100+ word detailed explanation of HOW the crime was committed, what evidence proves it, and how the killer tried to cover it up",
+    "motiveKeywords": ["3-4 keywords the detective must mention to solve it"]
   }
 ]
 
-Remember: narrative must be 100+ words with rich detail!
+IMPORTANT RULES:
+1. Each case needs 3-4 suspects with DIFFERENT personalities
+2. At least one suspect should seem VERY guilty but be innocent (red herring)
+3. The actual killer should seem less suspicious initially
+4. Alibis should be specific enough to verify or disprove
+5. Narrative and solution must be 100+ words each - make them dramatic!
     `;
   }
 
