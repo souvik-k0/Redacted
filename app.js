@@ -4,16 +4,206 @@ const state = {
   selectedSuspectId: null,
   chatHistory: [],
   evidenceFound: [],
-  investigationNotes: [], // Detective's notebook entries
+  investigationNotes: [],
   labReady: false,
   labProcessing: false,
   responseIndex: {},
-  apiKey: null,
   activeCases: [],
+  
+  // Persistent State (Managed by LocalDB)
+  user: null, // { id, name, xp, rankIndex, apiKey, language, solvedCases }
   language: 'en'
 };
 
+// --- LOCAL DATABASE SYSTEM ---
+const LocalDB = {
+  DB_KEY: 'redacted_db_v1',
+  
+  init: function() {
+    if (!localStorage.getItem(this.DB_KEY)) {
+      const initialData = {
+        users: {},
+        lastUser: null
+      };
+      localStorage.setItem(this.DB_KEY, JSON.stringify(initialData));
+    }
+  },
+
+  getDB: function() {
+    return JSON.parse(localStorage.getItem(this.DB_KEY));
+  },
+
+  saveDB: function(data) {
+    localStorage.setItem(this.DB_KEY, JSON.stringify(data));
+  },
+
+  getUsers: function() {
+    const db = this.getDB();
+    return Object.values(db.users);
+  },
+
+  login: function(name) {
+    const db = this.getDB();
+    const id = name.toLowerCase().replace(/\s+/g, '_');
+    
+    let user = db.users[id];
+    
+    if (!user) {
+      // Create new user
+      user = {
+        id: id,
+        name: name,
+        xp: 0,
+        rankIndex: 0,
+        // apiKey: null, // NEVER SAVE API KEY
+        language: 'en',
+        solvedCases: [],
+        createdAt: Date.now()
+      };
+      db.users[id] = user;
+    }
+    
+    db.lastUser = id;
+    this.saveDB(db);
+    return user;
+  },
+
+  saveUser: function(userState) {
+    const db = this.getDB();
+    if (db.users[userState.id]) {
+      // Security: Ensure API key is NEVER saved to localStorage
+      const safeData = { ...userState };
+      delete safeData.apiKey; 
+
+      db.users[userState.id] = { ...db.users[userState.id], ...safeData };
+      this.saveDB(db);
+    }
+  },
+
+  getLastUser: function() {
+    const db = this.getDB();
+    return db.lastUser ? db.users[db.lastUser] : null;
+  }
+};
+
+// --- AUDIO SYSTEM (No external assets needed) ---
+const SoundManager = {
+  ctx: null,
+  init: function() {
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new AudioContext();
+  },
+  playTone: function(freq, type, duration, vol = 0.1) {
+    if (!this.ctx) this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+  },
+  click: function() { this.playTone(800, 'sine', 0.1, 0.05); },
+  type: function() { this.playTone(400 + Math.random() * 200, 'triangle', 0.05, 0.02); },
+  success: function() {
+    this.playTone(440, 'sine', 0.2, 0.1);
+    setTimeout(() => this.playTone(554, 'sine', 0.2, 0.1), 100);
+    setTimeout(() => this.playTone(659, 'sine', 0.4, 0.1), 200);
+  },
+  failure: function() {
+    this.playTone(150, 'sawtooth', 0.4, 0.1);
+    setTimeout(() => this.playTone(100, 'sawtooth', 0.4, 0.1), 200);
+  },
+  evidence: function() {
+    this.playTone(1200, 'sine', 0.1, 0.05);
+    setTimeout(() => this.playTone(1800, 'sine', 0.3, 0.05), 100);
+  }
+};
+
+// --- PROGRESSION SYSTEM ---
+const RANKS = [
+  { threshold: 0, title: "🔰 Rookie", titleBn: "🔰 শিক্ষানবিশ" },
+  { threshold: 100, title: "👮 Constable", titleBn: "👮 কনস্টেবল" },
+  { threshold: 300, title: "🕵️ Detective", titleBn: "🕵️ গোয়েন্দা" },
+  { threshold: 600, title: "🔍 Inspector", titleBn: "🔍 ইন্সপেক্টর" },
+  { threshold: 1000, title: "🌟 Chief", titleBn: "🌟 প্রধান" },
+  { threshold: 2000, title: "👑 Legend", titleBn: "👑 কিংবদন্তি" }
+];
+
+const PlayerStats = {
+  // Migrated to use LocalDB
+  load: function() {
+    // This is now handled by Login Logic
+    this.updateRank();
+  },
+  
+  addXP: function(amount) {
+    if (!state.user) return;
+    
+    const oldRankIndex = state.user.rankIndex;
+    state.user.xp += amount;
+    
+    // Check Rank Up
+    let newIndex = 0;
+    for (let i = 0; i < RANKS.length; i++) {
+      if (state.user.xp >= RANKS[i].threshold) {
+        newIndex = i;
+      }
+    }
+    state.user.rankIndex = newIndex;
+    
+    // Save to DB
+    LocalDB.saveUser(state.user);
+    
+    // Check for rank up notification
+    if (state.user.rankIndex > oldRankIndex) {
+      this.showRankUpModal(state.user.rankIndex);
+      SoundManager.success();
+    }
+    this.updateUI();
+  },
+
+  updateRank: function() {
+    if (!state.user) return;
+    // Just sync UI
+    this.updateUI();
+  },
+
+  updateUI: function() {
+    const rankEl = document.getElementById("player-rank");
+    if (rankEl && state.user) {
+      const rankData = RANKS[state.user.rankIndex];
+      const title = state.language === 'bn' ? rankData.titleBn : rankData.title;
+      rankEl.textContent = `${title} (${state.user.xp} XP)`;
+    }
+  },
+  
+  showRankUpModal: function(newIndex) {
+    const rankData = RANKS[newIndex];
+    const title = state.language === 'bn' ? rankData.titleBn : rankData.title;
+    
+    const modal = document.createElement('div');
+    modal.className = 'level-up-modal';
+    modal.innerHTML = `
+      <span class="rank-icon">⭐</span>
+      <h2>PROMOTION!</h2>
+      <p>You have been promoted to:</p>
+      <h3>${title}</h3>
+      <button class="primary-btn" onclick="this.parentElement.remove()">ACCEPT</button>
+    `;
+    document.body.appendChild(modal);
+  }
+};
+
 // UI Elements
+const loginModal = document.getElementById("login-modal");
+const detectiveNameInput = document.getElementById("detective-name");
+const loginBtn = document.getElementById("login-btn");
+const existingProfiles = document.getElementById("existing-profiles");
+const profileButtons = document.getElementById("profile-buttons");
 const caseTitle = document.getElementById("case-title");
 const actionPointsEl = document.getElementById("action-points");
 const settingsBtn = document.getElementById("settings-btn");
@@ -114,6 +304,10 @@ const translations = {
 const updateUILanguage = (lang) => {
   // CRITICAL: Set state.language FIRST before anything else
   state.language = lang;
+  if (state.user) {
+    state.user.language = lang;
+    LocalDB.saveUser(state.user);
+  }
 
   // CRITICAL: Also sync the dropdown to match
   if (languageSelect.value !== lang) {
@@ -188,6 +382,9 @@ const updateUILanguage = (lang) => {
   if (searchBody) searchBody.textContent = `🔍 ${t.searchBody}`;
   if (checkRoom) checkRoom.textContent = `🚪 ${t.checkRoom}`;
   if (sendLab) sendLab.textContent = `🧪 ${t.sendLab}`;
+
+  // Update Rank UI
+  PlayerStats.updateUI();
 };
 
 
@@ -234,6 +431,7 @@ const showTypingIndicator = () => {
   const chatBubble = document.getElementById("chat-bubble");
   if (chatBubble) {
     chatBubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    SoundManager.type();
   }
 };
 
@@ -626,6 +824,20 @@ IMPORTANT RULES:
   }
 };
 
+const userInput = document.getElementById("user-input");
+const sendMessageBtn = document.getElementById("send-message");
+const chatModal = document.getElementById("chat-modal");
+const chatHistory = document.getElementById("chat-history");
+const chatSuspectName = document.getElementById("chat-suspect-name");
+const chatSuspectPersona = document.getElementById("chat-suspect-persona");
+const closeChatBtn = document.getElementById("close-chat");
+
+// Close chat functionality
+closeChatBtn.addEventListener("click", () => {
+  chatModal.classList.add("hidden");
+  state.currentSuspect = null;
+});
+
 const getScriptedResponse = (suspect, text) => {
   const lower = text.toLowerCase();
   if (lower.includes("alibi") || lower.includes("where") || lower.includes("time")) {
@@ -656,25 +868,32 @@ const getSuspectResponse = async (suspect, text) => {
   }
 };
 
+const addChatMessage = (sender, text) => {
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `chat-msg ${sender}`;
+  msgDiv.textContent = text;
+  chatHistory.appendChild(msgDiv);
+  chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll
+};
+
 const selectSuspect = (suspectId) => {
   state.selectedSuspectId = suspectId;
   const suspect = state.currentCase.suspects.find((item) => item.id === suspectId);
+  state.currentSuspect = suspect;
 
-  // Update suspect display
-  suspectName.textContent = suspect.name;
-  suspectPersona.textContent = suspect.persona;
-
-  // Show interrogation section
-  const interrogationSection = document.getElementById("interrogation-section");
-  if (interrogationSection) {
-    interrogationSection.classList.remove("hidden");
-  }
-
-  // Clear chat bubble for new interrogation
-  const chatBubble = document.getElementById("chat-bubble");
-  if (chatBubble) {
-    chatBubble.innerHTML = "";
-  }
+  // Update Chat UI
+  chatSuspectName.textContent = suspect.name;
+  chatSuspectPersona.textContent = suspect.persona;
+  chatHistory.innerHTML = ""; // Clear previous chat
+  
+  // Show Chat Modal
+  chatModal.classList.remove("hidden");
+  
+  // Add initial greeting
+  addChatMessage("suspect", `I am ${suspect.name}. ${suspect.persona}. What do you want, Detective?`);
+  
+  // Play sound
+  SoundManager.click();
 
   // Highlight active suspect card
   document.querySelectorAll(".suspect-card").forEach((card) => {
@@ -750,8 +969,10 @@ const startCase = (caseId) => {
   renderEvidence();
   accusationResult.textContent = "";
   accuseMotive.value = "";
-  suspectName.textContent = "Select a Suspect";
-  suspectPersona.textContent = "Pick someone to interrogate.";
+  
+  // No longer needed in main view
+  // suspectName.textContent = "Select a Suspect";
+  // suspectPersona.textContent = "Pick someone to interrogate.";
 
   // Show Story View
   storyTitle.textContent = caseData.title;
@@ -782,6 +1003,8 @@ const handleUserMessage = async () => {
   if (!state.selectedSuspectId || state.actionPoints <= 0) return;
   const text = userInput.value.trim();
   if (!text) return;
+  
+  addChatMessage("user", text);
   userInput.value = "";
   state.actionPoints -= 1;
   updateActionPoints();
@@ -790,22 +1013,31 @@ const handleUserMessage = async () => {
     (item) => item.id === state.selectedSuspectId
   );
 
-  // Show typing indicator in chat bubble
-  const chatBubble = document.getElementById("chat-bubble");
-  if (chatBubble) {
-    chatBubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  // Show typing indicator in chat modal
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "chat-msg suspect typing-indicator";
+  typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  chatHistory.appendChild(typingDiv);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+
+  try {
+    const response = await getSuspectResponse(suspect, text);
+    
+    // Remove typing indicator
+    chatHistory.removeChild(typingDiv);
+    
+    addChatMessage("suspect", response);
+    SoundManager.success();
+
+    // Add to investigation notes
+    addNote("interrogation", `Q: "${text}"`, "Detective");
+    addNote("interrogation", response, suspect.name);
+    
+  } catch (error) {
+    chatHistory.removeChild(typingDiv);
+    addChatMessage("suspect", "(The suspect stays silent... connection error.)");
+    console.error(error);
   }
-
-  const response = await getSuspectResponse(suspect, text);
-
-  // Display response in chat bubble
-  if (chatBubble) {
-    chatBubble.innerHTML = response;
-  }
-
-  // Add to investigation notes
-  addNote("interrogation", `Q: "${text}"`, "Detective");
-  addNote("interrogation", response, suspect.name);
 };
 
 const handleSearch = (type) => {
@@ -832,6 +1064,7 @@ const handleSearch = (type) => {
   state.actionPoints -= 1;
   state.evidenceFound = [...state.evidenceFound, ...added];
   renderEvidence(added);
+  SoundManager.evidence();
 
   // Add each evidence item as a note
   added.forEach(item => {
@@ -866,6 +1099,7 @@ const handleLab = () => {
     state.labProcessing = false;
     state.labReady = false;
     addMessage("system", "Lab report received: Analysis complete.");
+    SoundManager.evidence();
     updateActionPoints();
   }, 5000);
 };
@@ -914,9 +1148,17 @@ const handleAccusation = () => {
   if (isCorrectSuspect && isCorrectMotive) {
     solutionStatus.textContent = "CASE CLOSED: SUCCESS";
     solutionStatus.style.color = "var(--success)";
+    SoundManager.success();
+    // Award XP
+    PlayerStats.addXP(100);
+    addNote("system", `Case Solved! +100 XP`);
   } else {
     solutionStatus.textContent = "CASE COLD: FAILURE";
     solutionStatus.style.color = "#d32f2f";
+    SoundManager.failure();
+    // Pity XP
+    PlayerStats.addXP(10);
+    addNote("system", `Case Failed. +10 XP`);
   }
 
   solutionModal.classList.remove("hidden");
@@ -972,11 +1214,13 @@ saveKeyBtn.addEventListener("click", () => {
 
   if (key) {
     state.apiKey = key;
+    // NOTE: We do NOT save the API key to LocalDB anymore.
     console.log("Settings Saved! Generating cases...");
     settingsModal.classList.add("hidden");
     generateAICases();
   } else {
     state.apiKey = null;
+    // NOTE: Key removed from session
     console.log("API Key Removed.");
     state.activeCases = [];
     renderCaseCards();
@@ -996,6 +1240,57 @@ const updateKeyStatus = () => {
   }
 };
 
+// Global Sound Listener for Buttons
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('case-card') || e.target.classList.contains('suspect-card')) {
+    SoundManager.click();
+  }
+});
+
+// Login Logic
+const handleLogin = (name) => {
+  if (!name.trim()) return;
+  
+  const user = LocalDB.login(name.trim());
+  state.user = user;
+  
+  // Load User Settings
+  state.language = user.language || 'en';
+  state.apiKey = null; // Always reset API key on login (Session only)
+  state.xp = user.xp || 0; // Legacy support
+  
+  // Update UI
+  loginModal.classList.add("hidden");
+  updateUILanguage(state.language);
+  PlayerStats.updateRank();
+  updateKeyStatus();
+  
+  // Greeting
+  addMessage("system", `Welcome back, Detective ${user.name}.`);
+};
+
+loginBtn.addEventListener("click", () => {
+  handleLogin(detectiveNameInput.value);
+});
+
+// Load Profiles on Start
+LocalDB.init();
+const users = LocalDB.getUsers();
+if (users.length > 0) {
+  existingProfiles.classList.remove("hidden");
+  profileButtons.innerHTML = "";
+  users.forEach(u => {
+    const btn = document.createElement("button");
+    btn.className = "profile-btn";
+    btn.textContent = `${u.name} (Lvl ${u.rankIndex})`;
+    btn.onclick = () => handleLogin(u.name);
+    profileButtons.appendChild(btn);
+  });
+}
+
+// Auto-login if only one user? No, let them choose.
+// Initialize
+// PlayerStats.load(); -> Removed, handled by login
 updateKeyStatus();
 
 // Event Listeners for Game Interaction

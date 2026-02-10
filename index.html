@@ -10,11 +10,31 @@
 
 <body>
 
+  <!-- Profile / Login Modal -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <h2>IDENTIFICATION REQUIRED</h2>
+      <p>Please present your credentials to access the archives.</p>
+      <div class="input-group">
+        <label for="detective-name">Detective Name:</label>
+        <input type="text" id="detective-name" placeholder="e.g. Sherlock" autocomplete="off" />
+      </div>
+      <div class="modal-actions">
+        <button id="login-btn" class="primary-btn">ACCESS ARCHIVES</button>
+      </div>
+      <div id="existing-profiles" class="profile-list hidden">
+        <p>— OR SELECT PROFILE —</p>
+        <div id="profile-buttons"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal (Kept outside the folder) -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
       <h2>DETECTIVE INTELLIGENCE</h2>
       <p>To enable dynamic AI conversations, enter your Google Gemini API Key below. (Free at aistudio.google.com)</p>
+      <p style="font-size: 0.8rem; color: #d32f2f;"><strong>SECURITY NOTICE:</strong> Your API Key is NOT saved. You must enter it each session.</p>
       <div class="input-group">
         <label for="api-key">API Key:</label>
         <input type="password" id="api-key" placeholder="AIzaSy..." />
@@ -54,6 +74,7 @@
         <span class="brand-subtitle">Top Secret Case Files</span>
       </div>
       <div class="status-bar">
+        <div id="player-rank" class="rank-badge" title="Current Rank">🔰 Rookie</div>
         <select id="language-select" class="lang-dropdown">
           <option value="en">English</option>
           <option value="bn">বাংলা</option>
@@ -99,70 +120,81 @@
         <div class="action-section">
           <h3 id="action-header">Investigation Actions</h3>
           <div class="investigation-actions">
-            <button id="search-body" class="action-btn">🔍 Search Body</button>
-            <button id="check-room" class="action-btn">🚪 Check Room</button>
-            <button id="send-lab" class="action-btn">🧪 Send to Lab</button>
+            <button id="search-body" class="action-btn" onclick="handleSearch('body')">🔍 Search Body</button>
+            <button id="check-room" class="action-btn" onclick="handleSearch('room')">🚪 Check Room</button>
+            <button id="send-lab" class="action-btn" onclick="handleLab()">🧪 Send to Lab</button>
           </div>
         </div>
 
-        <!-- Interrogation Section (Visible when suspect selected) -->
-        <div class="interrogation-section hidden" id="interrogation-section">
-          <div class="interrogation-header">
-            <h3 id="interrogation-title">Interrogating:</h3>
-            <div class="suspect-info">
-              <strong id="suspect-name">Select a Suspect</strong>
-              <span id="suspect-persona">Click a suspect from the sidebar</span>
+        <!-- Chat Modal for Mobile/Desktop -->
+        <div id="chat-modal" class="chat-modal hidden">
+          <div class="chat-content">
+            <div class="chat-header">
+              <div class="chat-suspect-info">
+                <strong id="chat-suspect-name">Suspect Name</strong>
+                <span id="chat-suspect-persona">Role</span>
+              </div>
+              <button id="close-chat" class="icon-btn">✖</button>
+            </div>
+            <div id="chat-history" class="chat-history">
+              <!-- Messages go here -->
+            </div>
+            <div class="chat-input-area">
+              <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off" />
+              <button id="send-message" class="primary-btn">SEND</button>
             </div>
           </div>
-          <div class="chat-bubble" id="chat-bubble">
-            <!-- Current AI response shows here -->
-          </div>
-          <div class="chat-input">
-            <input id="user-input" type="text" placeholder="Ask a question..." />
-            <button id="send-message">Send</button>
-          </div>
         </div>
 
-        <!-- Investigation Notes (Notebook lines filled with notes) -->
+        <!-- Notebook (Evidence & Log) -->
         <div class="notes-section">
           <h3 id="notes-header">Detective's Notes</h3>
-          <div class="notes-content" id="notes-content">
-            <!-- Notes will be dynamically added here -->
-            <div class="note-placeholder" id="note-placeholder">Begin your investigation...</div>
+          <div id="notes-content" class="notes-content">
+            <!-- Notes go here -->
+          </div>
+          <div id="note-placeholder" class="note-placeholder">
+            Begin your investigation...
           </div>
         </div>
       </div>
 
-      <!-- Right Sidebar: Case File -->
+      <!-- Right Panel: Case File -->
       <aside class="case-file">
         <div class="case-section">
-          <h3>Case File</h3>
-          <p id="case-summary"></p>
-          <div class="case-meta" id="case-meta"></div>
+          <h3>CASE FILE</h3>
+          <div id="case-meta"></div>
+          <div id="case-summary" class="summary-text"></div>
         </div>
 
         <div class="case-section">
-          <h3 id="suspects-header">Suspects</h3>
-          <p class="suspects-hint" id="suspects-hint">Click to interrogate</p>
+          <h3>SUSPECTS</h3>
+          <p id="suspects-hint" class="suspects-hint">Click to interrogate</p>
           <div id="suspect-list" class="suspect-list"></div>
         </div>
 
         <div class="case-section">
-          <h3>Evidence</h3>
+          <h3>EVIDENCE</h3>
           <ul id="evidence-list" class="evidence-list"></ul>
         </div>
 
         <div class="case-section">
-          <h3>Accusation</h3>
-          <label for="accuse-suspect">Culprit</label>
-          <select id="accuse-suspect"></select>
-          <label for="accuse-motive">Motive</label>
-          <textarea id="accuse-motive" rows="3" placeholder="State the motive"></textarea>
-          <button id="submit-accusation">Submit Accusation</button>
-          <div id="accusation-result" class="accusation-result"></div>
+          <h3>ACCUSATION</h3>
+          <div class="accusation-form">
+            <label for="accuse-suspect">Culprit:</label>
+            <select id="accuse-suspect">
+              <option value="">Select suspect</option>
+            </select>
+
+            <label for="accuse-motive">Motive:</label>
+            <textarea id="accuse-motive" placeholder="State the motive"></textarea>
+
+            <button id="submit-accusation" class="primary-btn full-width" onclick="handleAccusation()">Submit
+              Accusation</button>
+            <p id="accusation-result"></p>
+          </div>
         </div>
 
-        <button id="back-to-cases" class="back-button">Back to Cases</button>
+        <button id="back-to-cases" class="text-btn">Back to Cases</button>
       </aside>
     </section>
   </main>
