@@ -3,9 +3,24 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>REDACTED</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2c241b">
+  <meta name="description" content="Top Secret Detective Game - Solve mysterious cases with AI-powered investigations">
+  <title>REDACTED - Detective Game</title>
   <link rel="stylesheet" href="./styles.css" />
+  
+  <!-- iOS Safari specific meta tags -->
+  <meta name="apple-mobile-web-app-title" content="REDACTED">
+  <meta name="format-detection" content="telephone=no">
+  
+  <!-- Android Chrome specific meta tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- Preload critical resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 
 <body>
@@ -44,6 +59,32 @@
         <button id="save-key" class="primary-btn">ACTIVATE AI</button>
         <!-- Offline Mode Removed -->
       </div>
+      
+      <!-- Data Management Section -->
+      <div class="data-management-section" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc;">
+        <h3 style="margin-bottom: 1rem; color: #333;">Data Management</h3>
+        
+        <div class="input-group">
+          <label for="export-data">Backup Data:</label>
+          <button id="export-data" class="secondary-btn" style="width: 100%;">📥 Export Game Data</button>
+        </div>
+        
+        <div class="input-group">
+          <label for="import-data">Restore Data:</label>
+          <input type="file" id="import-data" accept=".json" style="display: none;">
+          <button onclick="document.getElementById('import-data').click()" class="secondary-btn" style="width: 100%;">📤 Import Backup</button>
+        </div>
+        
+        <div class="input-group">
+          <label for="clear-data">Danger Zone:</label>
+          <button id="clear-data" class="danger-btn" style="width: 100%; background-color: #d32f2f; color: white;">🗑️ Clear All Data</button>
+        </div>
+        
+        <p class="status-msg" id="data-status" style="font-size: 0.8rem; margin-top: 0.5rem;">
+          Current User: Not logged in | Data: 0KB
+        </p>
+      </div>
+      
       <p class="status-msg" id="key-status">Current Status: Offline Mode (Scripted)</p>
     </div>
   </div>

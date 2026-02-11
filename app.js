@@ -10,83 +10,382 @@ const state = {
   responseIndex: {},
   activeCases: [],
   
-  // Persistent State (Managed by LocalDB)
+  // Persistent State (Managed by GameDatabase)
   user: null, // { id, name, xp, rankIndex, apiKey, language, solvedCases }
   language: 'en'
 };
 
-// --- LOCAL DATABASE SYSTEM ---
-const LocalDB = {
-  DB_KEY: 'redacted_db_v1',
+// ========================
+// ENHANCED DATABASE SYSTEM
+// ========================
+const GameDatabase = {
+  DB_KEY: 'redacted_db_v2',
+  VERSION: 2,
   
+  // Initialize database with proper schema
   init: function() {
-    if (!localStorage.getItem(this.DB_KEY)) {
-      const initialData = {
-        users: {},
-        lastUser: null
-      };
-      localStorage.setItem(this.DB_KEY, JSON.stringify(initialData));
+    try {
+      const existingData = localStorage.getItem(this.DB_KEY);
+      
+      if (!existingData) {
+        // Create fresh database with proper schema
+        const initialData = {
+          version: this.VERSION,
+          users: {},
+          lastUser: null,
+          settings: {
+            autoSave: true,
+            backupEnabled: false,
+            lastBackup: null
+          },
+          statistics: {
+            totalUsers: 0,
+            totalCasesSolved: 0,
+            totalPlayTime: 0,
+            lastUpdated: Date.now()
+          }
+        };
+        this._save(initialData);
+        console.log('New database initialized with version', this.VERSION);
+      } else {
+        // Check if we need to migrate from old version
+        const data = JSON.parse(existingData);
+        if (data.version !== this.VERSION) {
+          this._migrateFromV1(data);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Database initialization failed:', error);
+      return false;
     }
   },
 
+  // Get entire database (with error handling)
   getDB: function() {
-    return JSON.parse(localStorage.getItem(this.DB_KEY));
+    try {
+      const data = localStorage.getItem(this.DB_KEY);
+      if (!data) {
+        this.init();
+        return this.getDB();
+      }
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Failed to get database:', error);
+      this.init(); // Reset on critical error
+      return this.getDB();
+    }
   },
 
-  saveDB: function(data) {
-    localStorage.setItem(this.DB_KEY, JSON.stringify(data));
+  // Save database with validation
+  _save: function(data) {
+    try {
+      // Validate data structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid data structure');
+      }
+      
+      // Ensure required fields
+      data.version = this.VERSION;
+      data.lastUpdated = Date.now();
+      
+      localStorage.setItem(this.DB_KEY, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('Failed to save database:', error);
+      return false;
+    }
   },
 
-  getUsers: function() {
-    const db = this.getDB();
-    return Object.values(db.users);
-  },
-
-  login: function(name) {
-    const db = this.getDB();
-    const id = name.toLowerCase().replace(/\s+/g, '_');
-    
-    let user = db.users[id];
-    
-    if (!user) {
-      // Create new user
-      user = {
+  // User management
+  createUser: function(name, initialData = {}) {
+    try {
+      const db = this.getDB();
+      const id = this._generateUserId(name);
+      
+      if (db.users[id]) {
+        throw new Error('User already exists');
+      }
+      
+      const user = {
         id: id,
-        name: name,
+        name: name.trim(),
         xp: 0,
         rankIndex: 0,
-        // apiKey: null, // NEVER SAVE API KEY
         language: 'en',
         solvedCases: [],
-        createdAt: Date.now()
+        currentCase: null,
+        playTime: 0,
+        achievements: [],
+        preferences: {
+          soundEnabled: true,
+          musicEnabled: false,
+          notifications: true
+        },
+        createdAt: Date.now(),
+        lastLogin: Date.now(),
+        ...initialData
       };
+      
+      // Remove any sensitive data
+      delete user.apiKey;
+      
       db.users[id] = user;
+      db.statistics.totalUsers = Object.keys(db.users).length;
+      
+      if (this._save(db)) {
+        return user;
+      }
+      
+      throw new Error('Failed to save user');
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      return null;
     }
-    
-    db.lastUser = id;
-    this.saveDB(db);
-    return user;
   },
 
-  saveUser: function(userState) {
-    const db = this.getDB();
-    if (db.users[userState.id]) {
-      // Security: Ensure API key is NEVER saved to localStorage
-      const safeData = { ...userState };
-      delete safeData.apiKey; 
+  getUser: function(userId) {
+    try {
+      const db = this.getDB();
+      return db.users[userId] || null;
+    } catch (error) {
+      console.error('Failed to get user:', error);
+      return null;
+    }
+  },
 
-      db.users[userState.id] = { ...db.users[userState.id], ...safeData };
-      this.saveDB(db);
+  updateUser: function(userId, updates) {
+    try {
+      const db = this.getDB();
+      const user = db.users[userId];
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Apply updates (excluding sensitive fields)
+      const safeUpdates = { ...updates };
+      delete safeUpdates.apiKey;
+      delete safeUpdates.id;
+      delete safeUpdates.createdAt;
+      
+      Object.assign(user, safeUpdates);
+      user.lastUpdated = Date.now();
+      
+      if (this._save(db)) {
+        return user;
+      }
+      
+      throw new Error('Failed to save user updates');
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      return null;
+    }
+  },
+
+  deleteUser: function(userId) {
+    try {
+      const db = this.getDB();
+      
+      if (!db.users[userId]) {
+        return true; // Already deleted
+      }
+      
+      delete db.users[userId];
+      db.statistics.totalUsers = Object.keys(db.users).length;
+      
+      // Clear last user if it was this user
+      if (db.lastUser === userId) {
+        db.lastUser = null;
+      }
+      
+      return this._save(db);
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      return false;
+    }
+  },
+
+  getAllUsers: function() {
+    try {
+      const db = this.getDB();
+      return Object.values(db.users);
+    } catch (error) {
+      console.error('Failed to get users:', error);
+      return [];
+    }
+  },
+
+  // Authentication and session management
+  login: function(name) {
+    try {
+      const db = this.getDB();
+      const id = this._generateUserId(name);
+      
+      let user = db.users[id];
+      
+      if (!user) {
+        // Create new user with proper validation
+        user = this.createUser(name);
+        if (!user) {
+          throw new Error('Failed to create user during login');
+        }
+      }
+      
+      // Update login stats
+      user.lastLogin = Date.now();
+      user.loginCount = (user.loginCount || 0) + 1;
+      
+      db.lastUser = id;
+      
+      if (this._save(db)) {
+        return user;
+      }
+      
+      throw new Error('Failed to save login state');
+    } catch (error) {
+      console.error('Login failed:', error);
+      return null;
     }
   },
 
   getLastUser: function() {
-    const db = this.getDB();
-    return db.lastUser ? db.users[db.lastUser] : null;
+    try {
+      const db = this.getDB();
+      return db.lastUser ? this.getUser(db.lastUser) : null;
+    } catch (error) {
+      console.error('Failed to get last user:', error);
+      return null;
+    }
+  },
+
+  // Case management
+  addSolvedCase: function(userId, caseData) {
+    try {
+      const user = this.getUser(userId);
+      if (!user) return false;
+      
+      const solvedCase = {
+        caseId: caseData.id || caseData.caseId,
+        title: caseData.title || 'Unknown Case',
+        solvedAt: Date.now(),
+        accuracy: caseData.accuracy || 100,
+        timeTaken: caseData.timeTaken || 0,
+        score: caseData.score || 0
+      };
+      
+      user.solvedCases.push(solvedCase);
+      
+      // Update statistics
+      const db = this.getDB();
+      db.statistics.totalCasesSolved++;
+      
+      return this.updateUser(userId, user);
+    } catch (error) {
+      console.error('Failed to add solved case:', error);
+      return false;
+    }
+  },
+
+  // Utility methods
+  _generateUserId: function(name) {
+    return name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_').replace(/_{2,}/g, '_');
+  },
+
+  _migrateFromV1: function(oldData) {
+    try {
+      console.log('Migrating database from v1 to v2');
+      
+      const newData = {
+        version: this.VERSION,
+        users: {},
+        lastUser: oldData.lastUser,
+        settings: {
+          autoSave: true,
+          backupEnabled: false,
+          lastBackup: null
+        },
+        statistics: {
+          totalUsers: Object.keys(oldData.users || {}).length,
+          totalCasesSolved: 0,
+          totalPlayTime: 0,
+          lastUpdated: Date.now()
+        }
+      };
+      
+      // Migrate users
+      if (oldData.users) {
+        Object.entries(oldData.users).forEach(([id, user]) => {
+          newData.users[id] = {
+            ...user,
+            currentCase: null,
+            playTime: 0,
+            achievements: [],
+            preferences: {
+              soundEnabled: true,
+              musicEnabled: false,
+              notifications: true
+            },
+            lastLogin: user.lastLogin || user.createdAt || Date.now(),
+            loginCount: 1
+          };
+          
+          // Calculate total solved cases
+          if (user.solvedCases && user.solvedCases.length > 0) {
+            newData.statistics.totalCasesSolved += user.solvedCases.length;
+          }
+        });
+      }
+      
+      this._save(newData);
+      console.log('Database migration completed successfully');
+      return true;
+    } catch (error) {
+      console.error('Database migration failed:', error);
+      return false;
+    }
+  },
+
+  // Backup and restore functionality
+  exportData: function() {
+    try {
+      const db = this.getDB();
+      return JSON.stringify(db, null, 2);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      return null;
+    }
+  },
+
+  importData: function(jsonData) {
+    try {
+      const data = JSON.parse(jsonData);
+      if (data && typeof data === 'object') {
+        return this._save(data);
+      }
+      throw new Error('Invalid data format');
+    } catch (error) {
+      console.error('Failed to import data:', error);
+      return false;
+    }
+  },
+
+  // Clear all data (for testing/debugging)
+  clearAll: function() {
+    try {
+      localStorage.removeItem(this.DB_KEY);
+      return true;
+    } catch (error) {
+      console.error('Failed to clear database:', error);
+      return false;
+    }
   }
 };
 
-// --- AUDIO SYSTEM (No external assets needed) ---
+// ========================
+// AUDIO SYSTEM (No external assets needed)
+// ========================
 const SoundManager = {
   ctx: null,
   init: function() {
@@ -123,7 +422,9 @@ const SoundManager = {
   }
 };
 
-// --- PROGRESSION SYSTEM ---
+// ========================
+// PROGRESSION SYSTEM
+// ========================
 const RANKS = [
   { threshold: 0, title: "🔰 Rookie", titleBn: "🔰 শিক্ষানবিশ" },
   { threshold: 100, title: "👮 Constable", titleBn: "👮 কনস্টেবল" },
@@ -134,7 +435,7 @@ const RANKS = [
 ];
 
 const PlayerStats = {
-  // Migrated to use LocalDB
+  // Migrated to use GameDatabase
   load: function() {
     // This is now handled by Login Logic
     this.updateRank();
@@ -156,7 +457,7 @@ const PlayerStats = {
     state.user.rankIndex = newIndex;
     
     // Save to DB
-    LocalDB.saveUser(state.user);
+    GameDatabase.updateUser(state.user.id, state.user);
     
     // Check for rank up notification
     if (state.user.rankIndex > oldRankIndex) {
@@ -198,7 +499,9 @@ const PlayerStats = {
   }
 };
 
-// UI Elements
+// ========================
+// UI ELEMENTS
+// ========================
 const loginModal = document.getElementById("login-modal");
 const detectiveNameInput = document.getElementById("detective-name");
 const loginBtn = document.getElementById("login-btn");
@@ -215,7 +518,9 @@ const keyStatus = document.getElementById("key-status");
 const casePicker = document.getElementById("case-picker");
 // ... (rest of UI elements remain same, just ensuring languageSelect is defined)
 
-// Translations
+// ========================
+// TRANSLATIONS
+// ========================
 const translations = {
   en: {
     brandSubtitle: "Top Secret Case Files",
@@ -306,7 +611,7 @@ const updateUILanguage = (lang) => {
   state.language = lang;
   if (state.user) {
     state.user.language = lang;
-    LocalDB.saveUser(state.user);
+    GameDatabase.updateUser(state.user.id, state.user);
   }
 
   // CRITICAL: Also sync the dropdown to match
@@ -316,35 +621,75 @@ const updateUILanguage = (lang) => {
 
   console.log(`updateUILanguage called with: ${lang}, state.language now: ${state.language}, dropdown now: ${languageSelect.value}`);
 
-  const t = translations[lang];
-  // Main UI
-  document.querySelector(".brand-subtitle").textContent = t.brandSubtitle;
-  document.querySelector(".menu-subtitle").textContent = t.menuSubtitle;
-  document.getElementById("start-game-btn").textContent = t.enterArchives;
-  document.querySelector("#case-picker h2").textContent = t.unsolvedCases;
-  settingsBtn.innerHTML = t.aiSetup;
-  document.getElementById("case-title").textContent = t.selectCase;
-  document.getElementById("start-investigation").textContent = t.beginInvestigation;
+  const t = translations[lang] || translations.en;
 
-  // Modal Content
-  document.querySelector("#settings-modal h2").textContent = t.modalTitle;
-  document.querySelector("#settings-modal p").textContent = t.modalDesc;
-  document.querySelector("label[for='api-key']").textContent = t.labelApiKey;
+  // Main UI - handle missing elements gracefully
+  try {
+    const brandSubtitle = document.querySelector(".brand-subtitle");
+    const menuSubtitle = document.querySelector(".menu-subtitle");
+    const startGameBtn = document.getElementById("start-game-btn");
+    const casePickerH2 = document.querySelector("#case-picker h2");
+    const caseTitle = document.getElementById("case-title");
+    const startInvestigationBtn = document.getElementById("start-investigation");
+    
+    if (brandSubtitle) brandSubtitle.textContent = t.brandSubtitle;
+    if (menuSubtitle) menuSubtitle.textContent = t.menuSubtitle;
+    if (startGameBtn) startGameBtn.textContent = t.enterArchives;
+    if (casePickerH2) casePickerH2.textContent = t.unsolvedCases;
+    if (caseTitle) caseTitle.textContent = t.selectCase;
+    if (startInvestigationBtn) startInvestigationBtn.textContent = t.beginInvestigation;
+    if (settingsBtn) settingsBtn.innerHTML = t.aiSetup;
+  } catch (error) {
+    console.warn("Error updating main UI language:", error);
+  }
 
-  // Game Actions
-  document.getElementById("suspect-name").textContent = t.selectSuspect;
-  document.getElementById("suspect-persona").textContent = t.pickSuspect;
-  searchBody.textContent = t.searchBody;
-  checkRoom.textContent = t.checkRoom;
-  sendLab.textContent = t.sendLab;
-  userInput.placeholder = t.chatPlaceholder;
-  sendMessage.textContent = t.send;
+  // Modal Content - handle missing elements gracefully
+  try {
+    const settingsModalH2 = document.querySelector("#settings-modal h2");
+    const settingsModalP = document.querySelector("#settings-modal p");
+    const apiKeyLabel = document.querySelector("label[for='api-key']");
+    
+    if (settingsModalH2) settingsModalH2.textContent = t.modalTitle;
+    if (settingsModalP) settingsModalP.textContent = t.modalDesc;
+    if (apiKeyLabel) apiKeyLabel.textContent = t.labelApiKey;
+  } catch (error) {
+    console.warn("Error updating modal content:", error);
+  }
 
-  // Headers
-  document.querySelector("#game-view h3:nth-of-type(1)").textContent = t.caseFile;
-  document.querySelector("#game-view h3:nth-of-type(2)").textContent = t.suspects;
-  document.querySelector("#game-view h3:nth-of-type(3)").textContent = t.evidence;
-  document.querySelector("#game-view h3:nth-of-type(4)").textContent = t.accusation;
+  // Game Actions - handle missing elements gracefully
+  try {
+    const suspectNameEl = document.getElementById("suspect-name");
+    const suspectPersonaEl = document.getElementById("suspect-persona");
+    if (suspectNameEl) suspectNameEl.textContent = t.selectSuspect;
+    if (suspectPersonaEl) suspectPersonaEl.textContent = t.pickSuspect;
+    
+    if (searchBody) searchBody.textContent = t.searchBody;
+    if (checkRoom) checkRoom.textContent = t.checkRoom;
+    if (sendLab) sendLab.textContent = t.sendLab;
+    
+    // Chat modal elements - only update if they exist
+    const chatUserInput = document.getElementById("user-input");
+    const chatSendMessage = document.getElementById("send-message");
+    if (chatUserInput) chatUserInput.placeholder = t.chatPlaceholder;
+    if (chatSendMessage) chatSendMessage.textContent = t.send;
+  } catch (error) {
+    console.warn("Error updating game actions:", error);
+  }
+
+  // Headers - handle missing elements gracefully
+  try {
+    const caseFileHeader = document.querySelector("#game-view h3:nth-of-type(1)");
+    const suspectsHeader = document.querySelector("#game-view h3:nth-of-type(2)");
+    const evidenceHeader = document.querySelector("#game-view h3:nth-of-type(3)");
+    const accusationHeader = document.querySelector("#game-view h3:nth-of-type(4)");
+    
+    if (caseFileHeader) caseFileHeader.textContent = t.caseFile;
+    if (suspectsHeader) suspectsHeader.textContent = t.suspects;
+    if (evidenceHeader) evidenceHeader.textContent = t.evidence;
+    if (accusationHeader) accusationHeader.textContent = t.accusation;
+  } catch (error) {
+    console.warn("Error updating headers:", error);
+  }
 
   // Accusation Form
   document.querySelector("label[for='accuse-suspect']").textContent = t.culprit;
@@ -824,8 +1169,7 @@ IMPORTANT RULES:
   }
 };
 
-const userInput = document.getElementById("user-input");
-const sendMessageBtn = document.getElementById("send-message");
+// Chat modal elements - consolidated reference
 const chatModal = document.getElementById("chat-modal");
 const chatHistory = document.getElementById("chat-history");
 const chatSuspectName = document.getElementById("chat-suspect-name");
@@ -888,6 +1232,9 @@ const selectSuspect = (suspectId) => {
   
   // Show Chat Modal
   chatModal.classList.remove("hidden");
+  
+  // Setup chat modal event listeners
+  setupChatModalListeners();
   
   // Add initial greeting
   addChatMessage("suspect", `I am ${suspect.name}. ${suspect.persona}. What do you want, Detective?`);
@@ -1001,6 +1348,9 @@ startInvestigationBtn.addEventListener("click", enterInvestigation);
 
 const handleUserMessage = async () => {
   if (!state.selectedSuspectId || state.actionPoints <= 0) return;
+  const userInput = document.getElementById("user-input");
+  if (!userInput) return;
+  
   const text = userInput.value.trim();
   if (!text) return;
   
@@ -1211,10 +1561,10 @@ languageSelect.addEventListener("change", (e) => {
 // Update Settings Listener (Language handling moved to header listener)
 saveKeyBtn.addEventListener("click", () => {
   const key = apiKeyInput.value.trim();
-
+  
   if (key) {
     state.apiKey = key;
-    // NOTE: We do NOT save the API key to LocalDB anymore.
+    // NOTE: We do NOT save the API key to GameDatabase anymore.
     console.log("Settings Saved! Generating cases...");
     settingsModal.classList.add("hidden");
     generateAICases();
@@ -1228,6 +1578,168 @@ saveKeyBtn.addEventListener("click", () => {
   updateKeyStatus();
   settingsModal.classList.add("hidden");
 });
+
+// Data Management Functionality
+const exportDataBtn = document.getElementById("export-data");
+const importDataInput = document.getElementById("import-data");
+const clearDataBtn = document.getElementById("clear-data");
+const dataStatus = document.getElementById("data-status");
+
+// Update data status display
+const updateDataStatus = () => {
+  try {
+    const db = GameDatabase.getDB();
+    const userCount = Object.keys(db.users || {}).length;
+    const dataSize = JSON.stringify(db).length;
+    const currentUser = state.user ? state.user.name : "Not logged in";
+    
+    dataStatus.textContent = `Current User: ${currentUser} | Users: ${userCount} | Data: ${Math.round(dataSize / 1024)}KB`;
+    
+    if (userCount > 0) {
+      dataStatus.style.color = "var(--success)";
+    } else {
+      dataStatus.style.color = "#666";
+    }
+  } catch (error) {
+    dataStatus.textContent = "Data Status: Error loading data";
+    dataStatus.style.color = "#d32f2f";
+  }
+};
+
+// Export game data
+const exportGameData = () => {
+  try {
+    const data = GameDatabase.exportData();
+    if (!data) {
+      throw new Error("No data to export");
+    }
+    
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    
+    a.href = url;
+    a.download = `redacted_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    addMessage("system", "Game data exported successfully!");
+    console.log("Game data exported");
+  } catch (error) {
+    console.error("Export failed:", error);
+    addMessage("system", "Export failed: " + error.message);
+  }
+};
+
+// Import game data
+const importGameData = (file) => {
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    try {
+      const data = e.target.result;
+      if (!data) {
+        throw new Error("Empty file");
+      }
+      
+      const parsedData = JSON.parse(data);
+      if (!parsedData || typeof parsedData !== "object") {
+        throw new Error("Invalid file format");
+      }
+      
+      // Confirm import (destructive operation)
+      if (confirm("WARNING: This will replace ALL current game data. Continue?")) {
+        if (GameDatabase.importData(data)) {
+          addMessage("system", "Game data imported successfully!");
+          console.log("Game data imported");
+          
+          // Reload the page to apply changes
+          setTimeout(() => {
+            if (confirm("Data imported successfully. Reload page to apply changes?")) {
+              window.location.reload();
+            }
+          }, 1000);
+        } else {
+          throw new Error("Import failed - invalid data structure");
+        }
+      }
+    } catch (error) {
+      console.error("Import failed:", error);
+      addMessage("system", "Import failed: " + error.message);
+    }
+  };
+  
+  reader.onerror = () => {
+    console.error("File reading error");
+    addMessage("system", "Failed to read file");
+  };
+  
+  reader.readAsText(file);
+};
+
+// Clear all game data
+const clearAllData = () => {
+  // Double confirmation for destructive operation
+  if (!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will PERMANENTLY delete ALL game data including:\n• All user profiles\n• All progress and XP\n• All solved cases\n• All settings\n\nThis action cannot be undone!\n\nAre you absolutely sure?")) {
+    return;
+  }
+  
+  if (!confirm("LAST CHANCE: This will delete EVERYTHING. Type 'DELETE ALL' to confirm:")) {
+    return;
+  }
+  
+  const confirmation = prompt("Type 'DELETE ALL' to confirm data deletion:");
+  if (confirmation !== "DELETE ALL") {
+    addMessage("system", "Data deletion cancelled");
+    return;
+  }
+  
+  try {
+    if (GameDatabase.clearAll()) {
+      addMessage("system", "All game data has been cleared successfully!");
+      console.log("All game data cleared");
+      
+      // Reset application state
+      state.user = null;
+      state.apiKey = null;
+      state.activeCases = [];
+      state.language = 'en';
+      
+      // Update UI
+      updateDataStatus();
+      updateKeyStatus();
+      renderCaseCards();
+      PlayerStats.updateRank();
+      
+      // Show login modal
+      loginModal.classList.remove("hidden");
+      
+      addMessage("system", "Please create a new profile to continue playing.");
+    } else {
+      throw new Error("Failed to clear data");
+    }
+  } catch (error) {
+    console.error("Clear data failed:", error);
+    addMessage("system", "Failed to clear data: " + error.message);
+  }
+};
+
+// Event listeners for data management
+exportDataBtn.addEventListener("click", exportGameData);
+
+importDataInput.addEventListener("change", (e) => {
+  if (e.target.files.length > 0) {
+    importGameData(e.target.files[0]);
+    e.target.value = ''; // Reset file input
+  }
+});
+
+clearDataBtn.addEventListener("click", clearAllData);
+
+// Update data status when settings modal is opened
+settingsBtn.addEventListener("click", updateDataStatus);
 
 const updateKeyStatus = () => {
   const t = translations[state.language];
@@ -1251,7 +1763,7 @@ document.addEventListener('click', (e) => {
 const handleLogin = (name) => {
   if (!name.trim()) return;
   
-  const user = LocalDB.login(name.trim());
+  const user = GameDatabase.login(name.trim());
   state.user = user;
   
   // Load User Settings
@@ -1274,8 +1786,8 @@ loginBtn.addEventListener("click", () => {
 });
 
 // Load Profiles on Start
-LocalDB.init();
-const users = LocalDB.getUsers();
+GameDatabase.init();
+const users = GameDatabase.getAllUsers();
 if (users.length > 0) {
   existingProfiles.classList.remove("hidden");
   profileButtons.innerHTML = "";
@@ -1294,10 +1806,18 @@ if (users.length > 0) {
 updateKeyStatus();
 
 // Event Listeners for Game Interaction
-sendMessage.addEventListener("click", handleUserMessage);
-userInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") handleUserMessage();
-});
+// Chat modal event listeners (will be set up when modal is opened)
+function setupChatModalListeners() {
+  const userInput = document.getElementById("user-input");
+  const sendMessage = document.getElementById("send-message");
+  
+  if (userInput && sendMessage) {
+    sendMessage.addEventListener("click", handleUserMessage);
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleUserMessage();
+    });
+  }
+}
 
 searchBody.addEventListener("click", () => handleSearch("body"));
 checkRoom.addEventListener("click", () => handleSearch("room"));

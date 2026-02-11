@@ -518,10 +518,188 @@ button:active {
   40% { transform: scale(1); }
 }
 
-/* Responsive Tweaks */
-@media (min-width: 768px) {
+/* ==================== */
+/* MOBILE RESPONSIVENESS */
+/* ==================== */
+
+/* Base Mobile Styles (Mobile First) */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    width: 100%;
+    min-height: 92vh;
+    padding: 15px;
+    margin: 0;
+    transform: none;
+    border-radius: 8px;
+  }
+
+  .app-shell::before {
+    top: -25px;
+    left: 20px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .brand-title {
+    font-size: 1.8rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .status-bar {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .status-bar::after {
+    top: 5px;
+    right: 10px;
+    font-size: 1.2rem;
+    padding: 3px 10px;
+  }
+
+  .photo-frame {
+    width: 95%;
+    margin: 0 auto 15px auto;
+  }
+
+  .scene-image-placeholder {
+    height: 150px;
+  }
+
+  .case-list {
+    gap: 15px;
+  }
+
+  .case-card {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .game-view {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .investigation-panel {
+    order: 2;
+  }
+
+  .action-section {
+    padding: 12px;
+  }
+
+  .investigation-actions {
+    justify-content: center;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+  }
+
   .chat-content {
-    height: 600px; /* Fixed height on desktop */
+    height: 85vh;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .chat-header {
+    padding: 12px;
+  }
+
+  .chat-input-area {
+    padding: 12px;
+    flex-direction: column;
+  }
+
+  .chat-input-area input {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .modal-content {
+    margin: 10px;
+    padding: 20px;
+  }
+
+  .input-group {
+    margin-bottom: 15px;
+  }
+
+  /* Data management section mobile optimization */
+  .data-management-section {
+    margin-top: 1.5rem !important;
+    padding-top: 0.8rem !important;
+  }
+
+  .data-management-section h3 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  .secondary-btn, .danger-btn {
+    font-size: 0.85rem !important;
+    padding: 10px !important;
+  }
+
+  /* Touch target optimization */
+  button, .action-btn, .case-card {
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  /* Safe area insets for notched phones */
+  .app-shell {
+    padding-bottom: env(safe-area-inset-bottom, 15px);
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-shell {
+    width: 95%;
+    max-width: 900px;
+  }
+
+  .case-card {
+    width: 200px;
+  }
+
+  .game-view {
+    grid-template-columns: 1.5fr 1fr;
+  }
+
+  .chat-content {
+    height: 500px;
+  }
+}
+
+/* Desktop Enhancements */
+@media (min-width: 1025px) {
+  .chat-content {
+    height: 600px;
     margin-bottom: 20px;
     border-radius: 15px;
   }
@@ -530,6 +708,57 @@ button:active {
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.4);
+  }
+
+  .case-card:hover {
+    transform: scale(1.05) rotate(0deg);
+  }
+}
+
+/* High DPI/Retina Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .app-shell {
+    background-image: var(--paper-texture);
+    background-size: 200px 200px;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .case-card:hover {
+    transform: none !important;
+  }
+
+  button:hover {
+    transform: none !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-wood: #1a1612;
+    --folder-color: #2a251f;
+    --folder-shadow: #1a1612;
+    --paper-color: #2a251f;
+    --ink-color: #e8e6e3;
+  }
+
+  .case-card {
+    background: #2a251f;
+    color: #e8e6e3;
+  }
+
+  .action-btn {
+    background: #3a352f;
+    border-color: #5a554f;
+    color: #e8e6e3;
   }
 }
 
