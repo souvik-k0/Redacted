@@ -998,7 +998,7 @@ const generateAICases = async () => {
   let prompt = "";
 
   if (effectiveLang === "bn") {
-    // BENGALI PROMPT - Very explicit, MUST generate in Bengali
+    // BENGALI PROMPT - Enhanced for unpredictable, multi-layered storytelling
     prompt = `
 !!! CRITICAL INSTRUCTION - READ FIRST !!!
 YOU MUST RESPOND ENTIRELY IN BENGALI (বাংলা) LANGUAGE.
@@ -1006,54 +1006,162 @@ DO NOT USE ANY ENGLISH TEXT IN THE VALUES.
 ONLY THE JSON KEYS SHOULD BE IN ENGLISH.
 ALL VALUES MUST BE IN BENGALI SCRIPT (বাংলা লিপি).
 
-তুমি একজন বাংলা গোয়েন্দা গল্প লেখক। তোমাকে ৫টি ডিটেকটিভ মিস্ট্রি কেস বাংলায় লিখতে হবে।
+তুমি একজন অভিজ্ঞ বাংলা গোয়েন্দা গল্প লেখক। তোমাকে ৫টি অপ্রত্যাশিত, বহুস্তরীয় ডিটেকটিভ মিস্ট্রি কেস বাংলায় লিখতে হবে।
 
 বাধ্যতামূলক নিয়ম:
 ১. সব টেক্সট বাংলায় লিখতে হবে। কোনো ইংরেজি শব্দ চলবে না।
-২. স্থান: কলকাতা, পশ্চিমবঙ্গ (যেমন - শ্যামবাজার, কলেজ স্ট্রিট, গড়িয়াহাট, বালিগঞ্জ, উত্তর কলকাতা)
-৩. চরিত্রের নাম: বাংলা নাম (যেমন - সুব্রত চ্যাটার্জি, মিতালী ব্যানার্জি, রাজেশ ঘোষ, প্রিয়ংকা রায়)
-৪. থিম: বাংলা কালচারাল (যেমন - পুজোর মৌসুম, কলেজ স্ট্রিটের বইয়ের দোকান, পুরনো জমিদার বাড়ি)
-৫. narrative ফিল্ডে কমপক্ষে ১০০ শব্দ লিখতে হবে - বিস্তারিত গল্প বলো!
+২. স্থান: কলকাতা/পশ্চিমবঙ্গ কিন্তু অপ্রচলিত লোকেশন (যেমন - ইন্ডিয়ান ইনস্টিটিউট অফ সায়েন্স এডুকেশন অ্যান্ড রিসার্চ, সল্ট লেক সাইবার সিটি, পুরনো observatory, জেনেটিক রিসার্চ ল্যাব)
+৩. চরিত্রের নাম: বাংলা নাম কিন্তু unique (যেমন - অনির্বাণ চক্রবর্তী, ঋত্বিকা মৈত্র, সায়ন ভট্টাচার্য, দিব্যেন্দু গাঙ্গুলি)
+৪. থিম: CHOOSE FROM 1980-2010 ERA BENGALI THEMES:
+- কল্ড ওয়ার এজেন্ট: KGB/CIA sleeper agents in Kolkata, defector mysteries
+- আর্লি ইন্টারনেট রিভোলিউশন: BBS systems, cyber cafes, hacker culture
+- কর্পোরেট টেকওভারস: Hostile takeovers, insider trading, white-collar crime
+- অ্যানালগ টু ডিজিটাল: VHS tapes, floppy disks, early mobile phones as clues
+- সাবার্বান কনস্পিরেসি: Salt Lake, New Town perfect neighborhoods hiding secrets
+- মিউজিক ইন্ডাস্ট্রি: Record label schemes, cassette bootlegging, artist exploitation
+- ফার্মাসিউটিক্যাল স্ক্যান্ডালস: Drug testing coverups, medical experimentation
+- একাডেমিক রিসার্চ: University rivalries, stolen research, tenure wars
+- ইন্ডাস্ট্রিয়াল এস্পিওনাজ: Factory secrets, manufacturing processes theft
+- পলিটিক্যাল মেশিন: Local government graft, election manipulation
+- অর্গানাইজড ক্রাইম: Traditional underworld adapting to new technologies
+- মিডিয়া ম্যানিপুলেশন: Newsroom conspiracies, journalist corruption
+- ট্রান্সপোর্টেশন: Shipping logistics, trucking routes, smuggling operations
+- রিয়েল এস্টেট: Land grabs, gentrification conflicts in developing areas
+- এনার্জি সেক্টর: Oil company secrets, alternative energy suppression
+
+CRITICAL: Stay authentic to 1980-2010 technology (no smartphones, social media). Use era-appropriate clues like payphones, fax machines, pagers, early computers!
+
+৫. narrative ফিল্ডে কমপক্ষে ২০০ শব্দ লিখতে হবে - বিস্তারিত, multi-layered গল্প!
 
 JSON ফরম্যাট (keys ইংরেজি, values বাংলা):
 [
   {
-    "id": "kolkata_case_1",
-    "title": "হাওড়া ব্রিজের রহস্য",
-    "theme": "নোয়ার কলকাতা",
-    "narrative": "একটি ঝড়ের রাতে হাওড়া ব্রিজের নিচে একটি লাশ পাওয়া যায়। লাশটি ছিল বিখ্যাত ব্যবসায়ী অমিত সেনের। তার মাথায় গভীর আঘাত ছিল। পুলিশ ঘটনাস্থলে পৌঁছে দেখল যে তার পকেটে একটি রহস্যময় চিঠি ছিল। চিঠিতে লেখা ছিল কিছু সংকেত যা বোঝা যাচ্ছিল না। ব্রিজের নিচে তার গাড়িও পাওয়া গেল, কিন্তু গাড়ির চাবি নেই। প্রত্যক্ষদর্শীরা জানাল যে রাত দুটোর দিকে একটি গাড়ি দ্রুত গতিতে ব্রিজ থেকে নেমে গিয়েছিল। এই রহস্যময় খুনের তদন্ত শুরু হল...",
-    "summary": "হাওড়া ব্রিজে রহস্যজনক মৃত্যু",
-    "victim": "অমিত সেন",
-    "cause": "মাথায় আঘাত",
-    "location": "হাওড়া ব্রিজ, কলকাতা",
-    "time": "রাত ২টা",
+    "id": "bengali_case_1",
+    "title": "অপ্রত্যাশিত রহস্যের শিরোনাম",
+    "theme": "Choose from above innovative themes",
+    "narrative": "CREATE MULTI-LAYERED, UNPREDICTABLE STORIES WITH:
+- TWISTED TIMELINES: Non-linear events, flashbacks, time anomalies
+- UNRELIABLE REALITY: Perception-altering environments, unreliable witnesses  
+- SOCIETAL COMPLEXITY: Cultural, political, technological factors affecting motives
+- PSYCHOLOGICAL DEPTH: Character motivations rooted in trauma, ideology, philosophy
+- SYSTEMIC CONSPIRACIES: Larger organizations or systems influencing events
+- TECHNOLOGICAL ETHICS: Moral dilemmas around emerging technologies
+- EXISTENTIAL THREATS: Stakes beyond individual life/death
+- CULTURAL COLLISION: Conflicts between different value systems
+- ENVIRONMENTAL FACTORS: Setting itself becomes character/obstacle
+- METAPHYSICAL ELEMENTS: Reality-bending concepts challenging investigation
+
+AVOID PREDICTABLE PATTERNS:
+- No simple love triangles or inheritance disputes
+- No obvious jealous colleagues or business rivals  
+- No standard revenge plots without deeper complexity
+- No typical crime-of-passion without psychological depth
+
+CREATE SURPRISING REVEALS:
+- Motives that challenge moral assumptions
+- Methods that exploit unique setting properties
+- Connections that span multiple plot layers
+- Resolutions that leave philosophical questions
+
+Examples of innovative narrative approaches:
+- Victim was attempting to prevent their own future crime
+- Murder method relies on cultural ritual misunderstood by outsiders
+- Multiple suspects are aspects of same fractured personality
+- Crime scene exists in superposition until observed
+- Motive involves preventing existential catastrophe
+- Evidence is intentionally misleading due to reality distortion
+- Solution requires understanding completely alien value system",
+    "summary": "১-২ বাক্যের হুক",
+    "victim": "পুরো নাম",
+    "cause": "Specific cause of death",
+    "location": "বিস্তারিত লোকেশন",
+    "time": "নির্দিষ্ট সময়",
     "suspects": [
       {
         "id": "suspect_1",
-        "name": "রাজীব চ্যাটার্জি",
-        "persona": "ব্যবসায়ী, ৪৫ বছর",
-        "alibi": "আমি বাড়িতে ছিলাম",
-        "motive": "ব্যবসায়িক প্রতিদ্বন্দ্বিতা",
-        "evidence": "তার গাড়ি ব্রিজের কাছে দেখা গেছে",
-        "secret": "সে টাকা ধার করেছিল"
+        "name": "পুরো নাম",
+        "persona": "CREATE COMPLEX, CONTRADICTORY PERSONALITIES WITH:
+- PSYCHOLOGICAL DEPTH: Childhood trauma, personality disorders, hidden vulnerabilities
+- INTELLECTUAL COMPLEXITY: Unusual expertise, philosophical positions, specialized knowledge
+- SOCIAL DYNAMICS: Cultural background, group affiliations, social status conflicts
+- MORAL AMBIGUITY: Conflicting values, ethical dilemmas, situational morality
+- EMOTIONAL LAYERS: Masked emotions, controlled outbursts, hidden sensitivities
+- UNUSUAL TRAITS: Synesthesia, perfect memory, time perception differences
+- CULTURAL UNIQUENESS: Alien thought patterns, non-human perspectives, augmented cognition
+
+AVOID STEREOTYPES:
+- No generic angry boss or jealous lover tropes
+- No simple archetypes without psychological complexity
+- No predictable emotional responses without underlying causes
+- No one-dimensional character motivations
+
+CREATE PERSONALITY LAYERS:
+- Surface persona (how they present to world)
+- Private self (true personality when alone)
+- Trauma response (behavior under stress)
+- Cultural conditioning (learned behaviors)
+- Augmented traits (if technologically enhanced)
+
+Examples of innovative personalities:
+- Genius with emotional blindness due to neural augmentation
+- Trauma survivor who mimics emotions they don't feel
+- Alien thinker with completely different value hierarchy
+- AI pretending to be human with imperfect emotional simulation
+- Time-displaced individual with future knowledge but present limitations
+- Psychic who experiences others' emotions as physical sensations
+- Genetically engineered being with programmed personality constraints",
+        "alibi": "Specific, verifiable alibi with time and witness if any",
+        "motive": "CREATE COMPLEX, MULTI-LAYERED MOTIVES THAT CHALLENGE ASSUMPTIONS:
+- PSYCHOLOGICAL: Trauma responses, personality disorders, ideological convictions
+- SYSTEMIC: Coercion by larger organizations, blackmail, institutional pressure  
+- EXISTENTIAL: Preventing catastrophes, preserving species, reality preservation
+- PHILOSOPHICAL: Moral dilemmas, ethical contradictions, cultural imperatives
+- TECHNOLOGICAL: AI directives, genetic programming, cybernetic imperatives
+- METAPHYSICAL: Destiny, prophecy, reality-altering consequences
+- SOCIETAL: Cultural traditions, social engineering, civilizational survival
+
+AVOID SIMPLE MOTIVES:
+- No simple jealousy, greed, or revenge without deeper context
+- No obvious financial gain without complex ethical dimensions
+- No straightforward love triangles without psychological depth
+- No petty disputes without larger systemic implications
+
+CREATE MOTIVE LAYERS:
+- Surface motive (what seems obvious)
+- Hidden motive (true psychological driver)  
+- Systemic motive (larger forces at play)
+- Philosophical motive (underlying belief system)
+
+Examples of innovative motives:
+- Killing to prevent victim from causing temporal paradox
+- Murder as cultural ritual to maintain reality stability
+- Eliminating someone who discovered existential threat
+- Acting under compulsion from future self or alternate version
+- Protecting civilization by sacrificing individual according to ancient code
+- Preventing victim from activating doomsday technology out of misunderstanding
+- Carrying out sentence from non-human justice system",
+        "relationship": "Their relationship to the victim",
+        "evidence": "What evidence might implicate them",
+        "secret": "A non-murder secret they're hiding",
+        "personality": "How they behave when questioned"
       }
     ],
     "evidence": {
-      "initial": ["রক্তমাখা রুমাল", "ভাঙা চশমা"],
-      "bodySearch": ["মানিব্যাগ", "একটি চিঠি"],
-      "roomSearch": ["ছোরা", "পোড়া কাগজ"],
-      "labClue": "আঙুলের ছাপ মিলেছে",
-      "smokingGun": "হত্যাকারীর ফোনের রেকর্ড"
+      "initial": ["২ obvious clues at scene"],
+      "bodySearch": ["২ clues from examining victim"],
+      "roomSearch": ["২ clues from searching area"],
+      "labClue": "Technical analysis result",
+      "smokingGun": "The ONE piece of evidence that proves the killer"
     },
-    "killerId": "suspect_1",
-    "motiveText": "টাকার জন্য খুন",
-    "solution": "রাজীব টাকা ফেরত দিতে না পেরে অমিতকে খুন করে",
-    "motiveKeywords": ["টাকা", "ঋণ", "প্রতিশোধ"]
+    "killerId": "id of the actual killer",
+    "motiveText": "The TRUE motive explained",
+    "solution": "১০০+ শব্দের detailed explanation of HOW the crime was committed",
+    "motiveKeywords": ["৩-৪ keywords the detective must mention to solve it"]
   }
 ]
 
-এখন ৫টি সম্পূর্ণ আলাদা কেস তৈরি করো। প্রতিটিতে ৩-৪ জন সন্দেহভাজন রাখো।
-মনে রেখো: সব কিছু বাংলায়! narrative কমপক্ষে ১০০ শব্দ!
+এখন ৫টি সম্পূর্ণ আলাদা, অপ্রত্যাশিত কেস তৈরি করো। প্রতিটিতে ৩-৪ জন সন্দেহভাজন রাখো।
+মনে রেখো: সব কিছু বাংলায়! narrative কমপক্ষে ২০০ শব্দ! ক্লিশে themes এড়িয়ে চলো!
 `;
   } else {
     // English prompt - Enhanced for smarter gameplay
@@ -1066,8 +1174,60 @@ Each case must follow this schema:
   {
     "id": "unique_string",
     "title": "Catchy mystery title",
-    "theme": "String (e.g. Noir, Cyberpunk, Victorian, Corporate)",
-    "narrative": "MUST be 100+ words. Set the scene dramatically. Include red herrings!",
+    "theme": "Choose from 1980-2010 ERA UNPREDICTABLE settings like:
+- Cold War Espionage Aftermath: KGB/CIA sleeper agents, defector mysteries
+- Early Internet Revolution: BBS systems, hacker culture, dot-com bubble intrigue
+- Corporate Raiders Era: Hostile takeovers, insider trading, white-collar crime
+- Analog to Digital Transition: VHS tapes, floppy disks, early mobile phones as clues
+- Suburban Conspiracy: Perfect neighborhoods hiding dark secrets
+- Music Industry Corruption: Record label schemes, bootlegging, artist exploitation
+- Pharmaceutical Scandals: Drug testing coverups, medical experimentation
+- Academic Research Sabotage: University rivalries, stolen research, tenure wars
+- Industrial Espionage: Factory secrets, manufacturing processes theft
+- Political Machine Corruption: Local government graft, election manipulation
+- Organized Crime Evolution: Traditional mob adapting to new technologies
+- Counterculture Movements: Underground societies, alternative lifestyles
+- Media Manipulation: Newsroom conspiracies, journalist corruption
+- Transportation Industry: Shipping logistics, trucking routes, smuggling operations
+- Real Estate Development: Land grabs, gentrification conflicts
+- Energy Sector Intrigue: Oil company secrets, alternative energy suppression
+- Retail Empire Building: Department store wars, shopping mall conspiracies
+- Automotive Industry: Defect coverups, safety standard violations
+- Agricultural Biotechnology: GMO controversies, seed patent wars
+
+CRITICAL: Stay authentic to 1980-2010 technology (no smartphones, social media, or modern tech). Use era-appropriate clues like payphones, fax machines, pagers, early computers, and analog evidence!",
+    "narrative": "MUST be 200+ words. Create MULTI-LAYERED, UNPREDICTABLE stories with:
+- TWISTED TIMELINES: Non-linear events, flashbacks, or time anomalies
+- UNRELIABLE REALITY: Perception-altering environments or unreliable witnesses  
+- SOCIETAL COMPLEXITY: Cultural, political, or technological factors affecting motives
+- PSYCHOLOGICAL DEPTH: Character motivations rooted in trauma, ideology, or philosophy
+- SYSTEMIC CONSPIRACIES: Larger organizations or systems influencing events
+- TECHNOLOGICAL ETHICS: Moral dilemmas around emerging technologies
+- EXISTENTIAL THREATS: Stakes beyond individual life/death
+- CULTURAL COLLISION: Conflicts between different value systems or civilizations
+- ENVIRONMENTAL FACTORS: Setting itself becomes a character or obstacle
+- METAPHYSICAL ELEMENTS: Reality-bending concepts that challenge investigation
+
+AVOID PREDICTABLE PATTERNS:
+- No simple love triangles or inheritance disputes
+- No obvious jealous colleagues or business rivals  
+- No standard revenge plots without deeper complexity
+- No typical crime-of-passion without psychological depth
+
+CREATE SURPRISING REVEALS:
+- Motives that challenge moral assumptions
+- Methods that exploit unique setting properties
+- Connections that span multiple plot layers
+- Resolutions that leave philosophical questions
+
+Examples of innovative narrative approaches:
+- Victim was attempting to prevent their own future crime
+- Murder method relies on cultural ritual misunderstood by outsiders
+- Multiple suspects are aspects of same fractured personality
+- Crime scene exists in superposition until observed
+- Motive involves preventing existential catastrophe
+- Evidence is intentionally misleading due to reality distortion
+- Solution requires understanding completely alien value system",
     "summary": "1-2 sentence hook",
     "victim": "Full name",
     "cause": "Specific cause of death",
@@ -1077,9 +1237,66 @@ Each case must follow this schema:
       {
         "id": "suspect_1",
         "name": "Full name",
-        "persona": "Job, age, 2-3 personality traits",
+        "persona": "Create COMPLEX, CONTRADICTORY personalities with:
+- PSYCHOLOGICAL DEPTH: Childhood trauma, personality disorders, hidden vulnerabilities
+- INTELLECTUAL COMPLEXITY: Unusual expertise, philosophical positions, specialized knowledge
+- SOCIAL DYNAMICS: Cultural background, group affiliations, social status conflicts
+- MORAL AMBIGUITY: Conflicting values, ethical dilemmas, situational morality
+- EMOTIONAL LAYERS: Masked emotions, controlled outbursts, hidden sensitivities
+- UNUSUAL TRAITS: Synesthesia, perfect memory, time perception differences
+- CULTURAL UNIQUENESS: Alien thought patterns, non-human perspectives, augmented cognition
+
+AVOID STEREOTYPES:
+- No generic "angry boss" or "jealous lover" tropes
+- No simple archetypes without psychological complexity
+- No predictable emotional responses without underlying causes
+- No one-dimensional character motivations
+
+CREATE PERSONALITY LAYERS:
+- Surface persona (how they present to world)
+- Private self (true personality when alone)
+- Trauma response (behavior under stress)
+- Cultural conditioning (learned behaviors)
+- Augmented traits (if technologically enhanced)
+
+Examples of innovative personalities:
+- Genius with emotional blindness due to neural augmentation
+- Trauma survivor who mimics emotions they don't feel
+- Alien thinker with completely different value hierarchy
+- AI pretending to be human with imperfect emotional simulation
+- Time-displaced individual with future knowledge but present limitations
+- Psychic who experiences others' emotions as physical sensations
+- Genetically engineered being with programmed personality constraints",
         "alibi": "Specific, verifiable alibi with time and witness if any",
-        "motive": "Clear reason they MIGHT have done it",
+        "motive": "Create COMPLEX, MULTI-LAYERED motives that challenge assumptions:
+- PSYCHOLOGICAL: Trauma responses, personality disorders, ideological convictions
+- SYSTEMIC: Coercion by larger organizations, blackmail, institutional pressure  
+- EXISTENTIAL: Preventing catastrophes, preserving species, reality preservation
+- PHILOSOPHICAL: Moral dilemmas, ethical contradictions, cultural imperatives
+- TECHNOLOGICAL: AI directives, genetic programming, cybernetic imperatives
+- METAPHYSICAL: Destiny, prophecy, reality-altering consequences
+- SOCIETAL: Cultural traditions, social engineering, civilizational survival
+
+AVOID SIMPLE MOTIVES:
+- No simple jealousy, greed, or revenge without deeper context
+- No obvious financial gain without complex ethical dimensions
+- No straightforward love triangles without psychological depth
+- No petty disputes without larger systemic implications
+
+CREATE MOTIVE LAYERS:
+- Surface motive (what seems obvious)
+- Hidden motive (true psychological driver)  
+- Systemic motive (larger forces at play)
+- Philosophical motive (underlying belief system)
+
+Examples of innovative motives:
+- Killing to prevent victim from causing temporal paradox
+- Murder as cultural ritual to maintain reality stability
+- Eliminating someone who discovered existential threat
+- Acting under compulsion from future self or alternate version
+- Protecting civilization by sacrificing individual according to ancient code
+- Preventing victim from activating doomsday technology out of misunderstanding
+- Carrying out sentence from non-human justice system",
         "relationship": "Their relationship to the victim",
         "evidence": "What evidence might implicate them",
         "secret": "A non-murder secret they're hiding (affair, debt, etc.)",
@@ -1184,22 +1401,182 @@ closeChatBtn.addEventListener("click", () => {
 
 const getScriptedResponse = (suspect, text) => {
   const lower = text.toLowerCase();
-  if (lower.includes("alibi") || lower.includes("where") || lower.includes("time")) {
-    return suspect.alibi;
+  
+  // Optimized conversation history for mobile
+  if (!state.conversationHistory) state.conversationHistory = {};
+  if (!state.conversationHistory[suspect.id]) state.conversationHistory[suspect.id] = [];
+  
+  // Add current question to history (optimized format)
+  state.conversationHistory[suspect.id].push(`${Date.now()}:${text.substring(0, 50)}`);
+  
+  // Keep history limited to prevent memory issues (restored to 50 for better context)
+  if (state.conversationHistory[suspect.id].length > 50) {
+    state.conversationHistory[suspect.id].shift();
   }
-  if (lower.includes("motive") || lower.includes("why")) {
-    return suspect.motive;
+  
+  // Calculate suspicion level based on evidence presented
+  const suspicionLevel = calculateSuspicionLevel(suspect);
+  
+  // DYNAMIC RESPONSE SYSTEM
+  if (lower.includes("alibi") || lower.includes("where") || lower.includes("time") || lower.includes("during")) {
+    return enhanceResponse(suspect.alibi, suspicionLevel, "alibi");
   }
-  if (lower.includes("relationship") || lower.includes("victim")) {
-    return suspect.relationship;
+  if (lower.includes("motive") || lower.includes("why") || lower.includes("reason")) {
+    return enhanceResponse(suspect.motive, suspicionLevel, "motive");
   }
-  if (lower.includes("evidence") || lower.includes("clue")) {
-    return suspect.evidence;
+  if (lower.includes("relationship") || lower.includes("victim") || lower.includes("know")) {
+    return enhanceResponse(suspect.relationship, suspicionLevel, "relationship");
   }
+  if (lower.includes("evidence") || lower.includes("clue") || lower.includes("proof") || lower.includes("found")) {
+    return enhanceResponse(suspect.evidence, suspicionLevel, "evidence");
+  }
+  if (lower.includes("guilty") || lower.includes("kill") || lower.includes("murder") || lower.includes("did it")) {
+    return getAccusationResponse(suspect, suspicionLevel, text);
+  }
+  
+  // Context-aware generic responses (optimized)
+  const lastQuestions = state.conversationHistory[suspect.id].slice(-3);
+  const isRepetitive = lastQuestions.filter(q => 
+    q.split(':')[1].toLowerCase().includes(lower.substring(0, 20))
+  ).length > 1;
+  
+  if (isRepetitive) {
+    return getAnnoyedResponse(suspect, text);
+  }
+  
+  // Adaptive generic responses based on suspicion level
   const index = state.responseIndex[suspect.id] ?? 0;
-  const line = suspect.generic ? suspect.generic[index % suspect.generic.length] : "I have nothing to say.";
+  let line = suspect.generic ? suspect.generic[index % suspect.generic.length] : "I have nothing to say.";
+  
+  // Modify response based on emotional state
+  line = applyEmotionalTone(line, suspicionLevel);
+  
   state.responseIndex[suspect.id] = index + 1;
   return line;
+};
+
+// Enhanced response utilities
+const calculateSuspicionLevel = (suspect) => {
+  const evidenceCount = state.collectedEvidence.filter(e => 
+    e.includes(suspect.name) || e.includes(suspect.id)
+  ).length;
+  return Math.min(100, evidenceCount * 25); // 0-100 scale
+};
+
+const enhanceResponse = (response, suspicionLevel, type) => {
+  if (typeof response !== 'string') response = JSON.stringify(response);
+  
+  let enhanced = response;
+  
+  // Add emotional modifiers based on suspicion level
+  if (suspicionLevel > 70) {
+    enhanced = addDefensiveTone(enhanced, type);
+  } else if (suspicionLevel > 40) {
+    enhanced = addNervousTone(enhanced, type);
+  } else if (suspicionLevel > 10) {
+    enhanced = addCooperativeTone(enhanced, type);
+  }
+  
+  return enhanced;
+};
+
+const getAccusationResponse = (suspect, suspicionLevel, text) => {
+  if (suspicionLevel > 80 && hasStrongEvidence(suspect)) {
+    // High suspicion with strong evidence - potential confession
+    return `I... I can't keep lying. ${getConfession(suspect)}`;
+  } else if (suspicionLevel > 50) {
+    // Medium suspicion - defensive
+    return `How dare you accuse me! ${getDefensiveResponse(suspect)}`;
+  } else {
+    // Low suspicion - surprised/offended
+    return `Me? That's ridiculous! ${getInnocentResponse(suspect)}`;
+  }
+};
+
+const getAnnoyedResponse = (suspect, text) => {
+  const responses = [
+    "I already told you that. Are you not listening?",
+    "We've been over this. Can we move on?",
+    "*sigh* I thought detectives were supposed to have good memories.",
+    "You're asking the same questions again. Is this some kind of test?"
+  ];
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
+const applyEmotionalTone = (response, suspicionLevel) => {
+  if (suspicionLevel > 60) {
+    return response.replace(/\./g, '!').replace(/I/g, 'I...');
+  } else if (suspicionLevel > 30) {
+    return response.replace(/\./g, '...');
+  }
+  return response;
+};
+
+const addDefensiveTone = (response, type) => {
+  const prefixes = [
+    "Like I said,",
+    "I've already explained,",
+    "As I mentioned earlier,",
+    "To reiterate,"
+  ];
+  return `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${response}`;
+};
+
+const addNervousTone = (response, type) => {
+  const modifiers = [
+    "I think",
+    "If I remember correctly,",
+    "It might have been",
+    "Perhaps"
+  ];
+  return `${modifiers[Math.floor(Math.random() * modifiers.length)]} ${response}`;
+};
+
+const addCooperativeTone = (response, type) => {
+  const starters = [
+    "Sure,",
+    "Of course,",
+    "I'd be happy to tell you,",
+    "Let me think..."
+  ];
+  return `${starters[Math.floor(Math.random() * starters.length)]} ${response}`;
+};
+
+const hasStrongEvidence = (suspect) => {
+  // Check if smoking gun evidence has been found
+  return state.collectedEvidence.some(e => 
+    e.toLowerCase().includes("smoking") || e.toLowerCase().includes("conclusive")
+  );
+};
+
+const getConfession = (suspect) => {
+  const confessions = [
+    "I didn't mean for it to happen...",
+    "It was an accident, I swear!",
+    "They pushed me too far...",
+    "I had no choice..."
+  ];
+  return confessions[Math.floor(Math.random() * confessions.length)];
+};
+
+const getDefensiveResponse = (suspect) => {
+  const defenses = [
+    "I have an alibi for that time!",
+    "You have no proof of anything!",
+    "Why would I do something like that?",
+    "This is ridiculous - I'm being framed!"
+  ];
+  return defenses[Math.floor(Math.random() * defenses.length)];
+};
+
+const getInnocentResponse = (suspect) => {
+  const innocents = [
+    "I would never hurt anyone!",
+    "We were friends!",
+    "I have no reason to do such a thing!",
+    "This is completely unexpected!"
+  ];
+  return innocents[Math.floor(Math.random() * innocents.length)];
 };
 
 const getSuspectResponse = async (suspect, text) => {

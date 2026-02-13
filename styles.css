@@ -740,27 +740,7 @@ button:active {
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-wood: #1a1612;
-    --folder-color: #2a251f;
-    --folder-shadow: #1a1612;
-    --paper-color: #2a251f;
-    --ink-color: #e8e6e3;
-  }
-
-  .case-card {
-    background: #2a251f;
-    color: #e8e6e3;
-  }
-
-  .action-btn {
-    background: #3a352f;
-    border-color: #5a554f;
-    color: #e8e6e3;
-  }
-}
+/* Dark mode removed by user request */
 
 /* Notes Section (Detective's Notebook) */
 .notes-section {
